@@ -1,0 +1,50 @@
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: house_stats_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: house
+      POSTGRES_PASSWORD: househousehouse
+      POSTGRES_DB: house_stats
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  redis:
+    image: redis:latest
+    container_name: house_stats_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    container_name: house_stats_api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://house:househousehouse@postgres:5432/house_stats
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build: .
+    container_name: house_stats_worker
+    command: >
+      uv run celery -A app.celery:celery_worker worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+psycopg://house:househousehouse@postgres:5432/house_stats
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:
