@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from routes.router import router as api_router
-from config import Config
+from app.routes.router import router as api_router
+from app.config import Config
 
 
 def create_app() -> FastAPI:
@@ -14,8 +14,3 @@ def create_app() -> FastAPI:
     app.include_router(api_router)
 
     return app
-
-
-app = create_app()
-
-app
