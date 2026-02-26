@@ -8,9 +8,7 @@ from app.auth.native_auth_adapter import NativeAuthAdapter
 
 from app.config import Config
 
-@router.post("/register")
-def register_user():
-    pass
+router = APIRouter(tags=["Authentication"])
 
 
 # ======== Native authentication routes ========
