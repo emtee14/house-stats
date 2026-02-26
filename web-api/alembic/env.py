@@ -21,7 +21,7 @@ from app.models import auth
 
 target_metadata = SQLModel.metadata
 
-MANAGED_SCHEMAS = {"auth", "core"}
+MANAGED_SCHEMAS = {"auth", "billing"}
 
 def include_object(object, name, type_, reflected, compare_to):
     if type_ == "table":
@@ -76,6 +76,9 @@ def run_migrations_online() -> None:
         )
 
         with context.begin_transaction():
+            context.execute("CREATE SCHEMA IF NOT EXISTS auth")
+            context.execute("CREATE SCHEMA IF NOT EXISTS billing")
+
             context.run_migrations()
 
 
