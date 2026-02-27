@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, Cookie, status
 from sqlmodel import Session
 
+from app.auth.utils import get_current_user
 from app.db import get_session
 from app.models.auth import User
 from app.routes.schemas.auth import LoginRequest, LoginResponse, RegisterUserRequest, RegisterUserResponse
@@ -54,25 +55,57 @@ def register_user(request: RegisterUserRequest, session: Session = Depends(get_s
                  }
              }
              )
-def login_user(request: LoginRequest, session: Session = Depends(get_session)):
+def login_user(request: LoginRequest, response: Response, session: Session = Depends(get_session)):
     auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
 
     try:
-        token = auth_adapter.login(request.username, request.password)
+        access_token, refresh_token = auth_adapter.login(request.username, request.password)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    return LoginResponse(access_token=token)
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+
+    return LoginResponse(access_token=access_token)
 
 @router.post("/refresh")
-def refresh_token():
-    pass
+def refresh_jwt(refresh_token: str = Cookie(None),
+                  session: Session = Depends(get_session)):
+    if refresh_token is None:
+        raise HTTPException(status_code=400, detail="No refresh token present")
+
+    auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
+
+    try:
+        access_token = auth_adapter.refresh_token(refresh_token)
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+    return LoginResponse(access_token=access_token)
+
 
 @router.post("/logout")
-def logout_user():
-    pass
+def logout_user(refresh_token: str = Cookie(None),
+                  session: Session = Depends(get_session)):
+    if refresh_token is None:
+        raise HTTPException(status_code=400, detail="No refresh token present")
+
+    auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
+
+    try:
+        auth_adapter.revoke_refresh_token(refresh_token)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return Response(status_code=status.HTTP_200_OK)
 
 
+# ======== Route for logging in via OAuth provider ========
 @router.get("/oauth/{provider}/login")
 def oauth_login(provider: str):
     pass
