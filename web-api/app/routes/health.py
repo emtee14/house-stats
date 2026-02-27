@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+from app.routes.schemas.health import HealthResponse
+
+router = APIRouter(tags=["Miscellaneous"])
 
 @router.get("/")
-def health():
-    return {"status": "ok"}
+def health() -> HealthResponse:
+    return HealthResponse(status = "ok")
