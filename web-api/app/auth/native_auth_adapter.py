@@ -36,6 +36,7 @@ class NativeAuthAdapter(AuthBase):
         self.session.add(user)
         self.session.commit()
 
+
         return user
 
     def _create_jwt_token(self, user: User, expires_delta: timedelta = timedelta(minutes=5)):
