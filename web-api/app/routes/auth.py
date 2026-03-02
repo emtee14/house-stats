@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, Cookie, status
 from sqlmodel import Session
 
-from app.auth.utils import get_current_user
+from app.auth.deps import get_current_user
 from app.db import get_session
 from app.models.auth import User
 from app.routes.schemas.auth import LoginRequest, LoginResponse, RegisterUserRequest, RegisterUserResponse
 from app.auth.native_auth_adapter import NativeAuthAdapter
-
+from app.billing.stripe_adapter import StripePaymentAdapter
 from app.config import Config
 
 router = APIRouter(tags=["Authentication"])
@@ -39,6 +39,9 @@ def register_user(request: RegisterUserRequest, session: Session = Depends(get_s
         auth_adapter.add_new_user(user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    payment_adap = StripePaymentAdapter(Config.STRIPE_API_TOKEN)
+    payment_adap.setup_user(user, session)
 
     return RegisterUserResponse()
 
@@ -112,4 +115,18 @@ def oauth_login(provider: str):
 
 @router.get("/oauth/{provider}/callback")
 def oauth_callback(provider: str):
+    pass
+
+
+# ======== Token for MCP and interaction from a system ========
+@router.post("/token/create")
+def create_api_token():
+    pass
+
+@router.post("/token/refresh")
+def refresh_api_token():
+    pass
+
+@router.post("/token/delete")
+def delete_api_token():
     pass
