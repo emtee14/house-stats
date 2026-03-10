@@ -15,3 +15,5 @@ class Config:
 
     CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND")
     CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL")
+
+    STRIPE_API_TOKEN: str = os.environ.get("STRIPE_API_TOKEN")

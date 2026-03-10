@@ -18,6 +18,7 @@ if config.config_file_name is not None:
 from sqlmodel import SQLModel
 from app.db import engine
 from app.models import auth
+from app.models import billing
 
 target_metadata = SQLModel.metadata
 
@@ -50,7 +51,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         include_schemas=True,
         compare_type=True,
-        include_obj=include_object,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -72,7 +73,11 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            include_schemas=True,
+            compare_type=True,
+            include_object=include_object,
         )
 
         with context.begin_transaction():
