@@ -4,6 +4,7 @@ from typing import List, TYPE_CHECKING
 
 import bcrypt
 from pydantic import EmailStr
+from sqlalchemy import DateTime, Column
 from sqlmodel import Field, SQLModel, Relationship
 import uuid
 
@@ -26,6 +27,7 @@ class User(SQLModel, table=True):
     subscription_id: str = Field(index=True, nullable=True)
 
     refresh_tokens: List["RefreshToken"] = Relationship(back_populates="user")
+    api_tokens: List["ApiToken"] = Relationship(back_populates="user")
 
     billing_ledgers: List["BillingLedger"] = Relationship(back_populates="user")
 
@@ -47,8 +49,9 @@ class RefreshToken(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="auth.users.id")
     token_hash: bytes = Field()
-    issued_at: datetime = Field(default_factory=lambda : datetime.now(UTC))
-    expires_at: datetime = Field()
+    issued_at: datetime = Field(default_factory=lambda : datetime.now(UTC),
+                                sa_column=Column(DateTime(timezone=True), nullable=False))
+    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     revoked: bool = Field(default=False)
 
     user: User = Relationship(back_populates="refresh_tokens")
@@ -60,3 +63,16 @@ class RefreshToken(SQLModel, table=True):
 
     def revoke_token(self):
         self.revoked = True
+
+class ApiToken(SQLModel, table=True):
+    __tablename__ = "api_tokens"
+    __table_args__ = {"schema": "auth"}
+    id: str = Field(primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="auth.users.id")
+    token_hash: bytes = Field()
+    issued_at: datetime = Field(default_factory=lambda : datetime.now(UTC),
+                                     sa_column=Column(DateTime(timezone=True), nullable=False))
+    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    revoked: bool = Field(default=False)
+
+    user: User = Relationship(back_populates="api_tokens")
