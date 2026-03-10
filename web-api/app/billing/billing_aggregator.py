@@ -20,9 +20,12 @@ class BillingAggregator:
         results = self._session.exec(stmt)
         return results
 
-    def aggregate_user_billing(self, user: User, upto: datetime = datetime.now(UTC)):
+    def aggregate_user_billing(self, user: User, upto: datetime | None = None):
+        if upto is None:
+            upto = datetime.now(UTC)
+
         stmt = (select(func.sum(Usage.tokens), func.min(Usage.timestamp), func.max(Usage.timestamp))
-                .where((Usage.user_id == user.id) & (Usage.timestamp <= upto) & (Usage.ledger_id == None)))
+                .where((Usage.user_id == user.id) & (Usage.timestamp <= upto) & Usage.ledger_id.is_(None)))
         usage_stats = self._session.exec(stmt).one_or_none()
 
         if None not in usage_stats:
