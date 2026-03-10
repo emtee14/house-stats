@@ -1,0 +1,41 @@
+name: Pytest
+
+on:
+  push:
+    paths:
+      - "web-api/**"
+  pull_request:
+    paths:
+      - "web-api/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.13"]
+
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-extras --dev
+
+      - name: Run pytest
+        run: |
+          uv run pytest
