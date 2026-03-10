@@ -4,7 +4,8 @@ from sqlmodel import select
 from app.auth.native_auth_adapter import NativeAuthAdapter
 from app.models.auth import User
 import jwt
-from tests.common import db_session, engine, config, create_user
+from tests.common import db_session, engine, config
+from tests.auth.common import create_user
 
 
 
