@@ -12,7 +12,9 @@ from app.models.auth import User, RefreshToken
 
 
 class NativeAuthAdapter(AuthBase):
-    def __init__(self, session: Session, secret_key: str, algorithm: str = "HS256") -> None:
+    def __init__(
+        self, session: Session, secret_key: str, algorithm: str = "HS256"
+    ) -> None:
         self._session = session
         self._secret_key = secret_key
         self._algorithm = algorithm
@@ -36,13 +38,14 @@ class NativeAuthAdapter(AuthBase):
         self._session.add(user)
         self._session.commit()
 
-
         return user
 
-    def _create_jwt_token(self, user: User, expires_delta: timedelta = timedelta(minutes=5)):
+    def _create_jwt_token(
+        self, user: User, expires_delta: timedelta = timedelta(minutes=5)
+    ):
         data_to_encode = {
             "user_id": user.id.hex,
-            "exp": datetime.now(UTC) + expires_delta
+            "exp": datetime.now(UTC) + expires_delta,
         }
 
         encoded_jwt = jwt.encode(data_to_encode, self._secret_key, self._algorithm)
@@ -67,20 +70,24 @@ class NativeAuthAdapter(AuthBase):
             payload = jwt.decode(token, self._secret_key, algorithms=[self._algorithm])
             return payload
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
-            raise e # ValueError("Signature invalid or expired")
+            raise e  # ValueError("Signature invalid or expired")
 
     def _verify_refresh_token(self, token: str) -> RefreshToken | None:
         token_hash = sha256(token.encode()).digest()
-        stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash).limit(1)
+        stmt = (
+            select(RefreshToken).where(RefreshToken.token_hash == token_hash).limit(1)
+        )
 
         refresh_token = self._session.exec(stmt).one_or_none()
         return refresh_token
 
     def refresh_token(self, token: str) -> str:
         refr_token = self._verify_refresh_token(token)
-        if (refr_token is not None
-                and refr_token.expires_at < datetime.now(UTC).now()
-                and refr_token.revoked is False):
+        if (
+            refr_token is not None
+            and refr_token.expires_at < datetime.now(UTC).now()
+            and refr_token.revoked is False
+        ):
             new_jwt = self._create_jwt_token(refr_token.user)
             return new_jwt
         else:
@@ -94,7 +101,6 @@ class NativeAuthAdapter(AuthBase):
             return token
         else:
             raise ValueError("Incorrect refresh token.")
-
 
     def login(self, username: str, password: str) -> Tuple[str, str]:
         user = self.get_user_by_email(username)

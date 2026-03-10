@@ -9,7 +9,7 @@ elif os.environ.get("ENV") == "test":
 
 
 class Config:
-    DATABASE_URL: str = os.environ.get(f"DATABASE_URL")
+    DATABASE_URL: str = os.environ.get("DATABASE_URL")
     SECRET_KEY: str = os.environ.get("SECRET_KEY")
     JWT_ALGORITHM: str = os.environ.get("JWT_ALGORITHM")
 

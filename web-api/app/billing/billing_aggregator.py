@@ -16,7 +16,11 @@ class BillingAggregator:
         self._session = session
 
     def get_users(self, period_end: datetime = datetime.now(UTC)) -> ScalarResult[User]:
-        stmt = select(User).where((User.id == Usage.user_id) & (Usage.timestamp <= period_end)).distinct(User.id)
+        stmt = (
+            select(User)
+            .where((User.id == Usage.user_id) & (Usage.timestamp <= period_end))
+            .distinct(User.id)
+        )
         results = self._session.exec(stmt)
         return results
 
@@ -24,8 +28,13 @@ class BillingAggregator:
         if upto is None:
             upto = datetime.now(UTC)
 
-        stmt = (select(func.sum(Usage.tokens), func.min(Usage.timestamp), func.max(Usage.timestamp))
-                .where((Usage.user_id == user.id) & (Usage.timestamp <= upto) & Usage.ledger_id.is_(None)))
+        stmt = select(
+            func.sum(Usage.tokens), func.min(Usage.timestamp), func.max(Usage.timestamp)
+        ).where(
+            (Usage.user_id == user.id)
+            & (Usage.timestamp <= upto)
+            & (Usage.ledger_id is None)
+        )
         usage_stats = self._session.exec(stmt).one_or_none()
 
         if None not in usage_stats:
@@ -48,11 +57,15 @@ class BillingAggregator:
         return new_ledger_entry
 
     def update_usage_events(self, ledger_entry: BillingLedger):
-        stmt = update(Usage) \
-                .where((Usage.user_id == ledger_entry.user_id) &
-                       (Usage.timestamp <= ledger_entry.period_end) &
-                       (Usage.ledger_id == None)) \
-                .values(ledger_id=ledger_entry.id)
+        stmt = (
+            update(Usage)
+            .where(
+                (Usage.user_id == ledger_entry.user_id)
+                & (Usage.timestamp <= ledger_entry.period_end)
+                & (Usage.ledger_id is None)
+            )
+            .values(ledger_id=ledger_entry.id)
+        )
         self._session.exec(stmt)
 
         return ledger_entry
@@ -88,7 +101,6 @@ class BillingAggregator:
         for user in users:
             ledger_entry = self.aggregate_user_billing(user)
             ledger_list.append(ledger_entry)
-
 
         for ledger in ledger_list:
             stripe_instance = StripePaymentAdapter(Config.STRIPE_API_TOKEN)
