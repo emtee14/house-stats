@@ -16,3 +16,12 @@ class RegisterUserRequest(BaseModel):
 
 class RegisterUserResponse(BaseModel):
     msg: str = "Successfully created user, please login to continue"
+
+
+class CreateApiTokenRequest(BaseModel):
+    expiry: str
+
+class CreateApiTokenResponse(BaseModel):
+    expiry: str
+    token: str
+
