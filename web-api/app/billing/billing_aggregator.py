@@ -16,7 +16,7 @@ class BillingAggregator:
         self._session = session
 
     def get_users(self, period_end: datetime = datetime.now(UTC)) -> ScalarResult[User]:
-        stmt = select(User).where((User.id == Usage.user_id) & (Usage.timestamp <= period_end))
+        stmt = select(User).where((User.id == Usage.user_id) & (Usage.timestamp <= period_end)).distinct(User.id)
         results = self._session.exec(stmt)
         return results
 
