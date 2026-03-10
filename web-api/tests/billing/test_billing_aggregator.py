@@ -232,6 +232,6 @@ def test_aggregation_en_masse_multi_user(create_user, create_usage, db_session, 
                 for usage in usages_2:
                     assert usage in ledger.cost_items
             case user_3.id:
-                for usage in usages_2:
+                for usage in usages_3:
                     assert usage in ledger.cost_items
 

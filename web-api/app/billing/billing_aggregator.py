@@ -89,10 +89,11 @@ class BillingAggregator:
 
         for ledger in ledger_list:
             stripe_instance = StripePaymentAdapter(Config.STRIPE_API_TOKEN)
+            user = self._session.get(User, ledger.user_id)
 
             event_id = stripe_instance.log_new_billing_event(
                 "api_requests",
-                ledger.user.stripe_id,
+                user.stripe_id,
                 ledger.total_tokens,
             )
 

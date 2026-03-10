@@ -150,7 +150,7 @@ def oauth_callback(provider: str):
 
 # ======== Token for MCP and interaction from a system ========
 @router.post("/token/create")
-def create_api_token(user: User = Depends(get_current_user()),
+def create_api_token(user: User = Depends(get_current_user),
                      session : Session = Depends(get_session)) -> CreateApiTokenResponse:
     api_token_adap = ApiTokenAuth(session)
 
@@ -161,7 +161,7 @@ def create_api_token(user: User = Depends(get_current_user()),
 
 
 @router.post("/token/delete")
-def delete_api_token(request: RevokeApiTokenRequest, user: User = Depends(get_current_user()),
+def delete_api_token(request: RevokeApiTokenRequest, user: User = Depends(get_current_user),
                      session : Session = Depends(get_session)) -> RevokeApiTokenResponse:
     api_token_adap = ApiTokenAuth(session)
 
