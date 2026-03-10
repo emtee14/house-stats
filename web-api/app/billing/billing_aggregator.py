@@ -30,7 +30,7 @@ class BillingAggregator:
         ).where(
             (Usage.user_id == user.id)
             & (Usage.timestamp <= upto)
-            & (Usage.ledger_id == None)
+            & (Usage.ledger_id == None) # noqa: E711
         )
         usage_stats = self._session.exec(stmt).one_or_none()
 
@@ -59,7 +59,7 @@ class BillingAggregator:
             .where(
                 (Usage.user_id == ledger_entry.user_id)
                 & (Usage.timestamp <= ledger_entry.period_end)
-                & (Usage.ledger_id == None)
+                & (Usage.ledger_id == None) # noqa: E711
             )
             .values(ledger_id=ledger_entry.id)
         )
