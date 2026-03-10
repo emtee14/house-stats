@@ -1,12 +1,11 @@
 from email_validator import validate_email, EmailNotValidError
 from fastapi import APIRouter, Depends, HTTPException, Response, Cookie, status
 from sqlmodel import Session
-from datetime import datetime
 
 from app.auth.api_tokens import ApiTokenAuth
 from app.auth.deps import get_current_user
 from app.db import get_session
-from app.models.auth import User, ApiToken
+from app.models.auth import User
 from app.routes.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -45,7 +44,7 @@ def register_user(
     auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
 
     try:
-        emailinfo = validate_email(request.email, check_deliverability=False)
+        validate_email(request.email, check_deliverability=False)
     except EmailNotValidError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

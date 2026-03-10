@@ -14,7 +14,9 @@ class AuthBase(ABC):
         pass
 
     @abstractmethod
-    def _create_jwt_token(self, payload: dict, expires_delta: timedelta = timedelta(minutes=5)):
+    def _create_jwt_token(
+        self, payload: dict, expires_delta: timedelta = timedelta(minutes=5)
+    ):
         pass
 
     @abstractmethod

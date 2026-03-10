@@ -11,6 +11,7 @@ import uuid
 if TYPE_CHECKING:
     from app.models.billing import BillingLedger
 
+
 class User(SQLModel, table=True):
     __tablename__ = "users"
     __table_args__ = {"schema": "auth"}
@@ -30,7 +31,6 @@ class User(SQLModel, table=True):
     api_tokens: List["ApiToken"] = Relationship(back_populates="user")
 
     billing_ledgers: List["BillingLedger"] = Relationship(back_populates="user")
-
 
     def set_password(self, password: str):
         password_bytes = password.encode()
