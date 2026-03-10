@@ -4,6 +4,8 @@ from typing import List
 from sqlmodel import Field, SQLModel, Relationship
 import uuid
 
+from app.models.auth import User
+
 
 class Usage(SQLModel, table=True):
     __tablename__ = "endpoint_usage"
@@ -33,4 +35,20 @@ class BillingLedger(SQLModel, table=True):
     period_end: datetime = Field()
     timestamp: datetime = Field()
 
+    stripe_event_id: str = Field(nullable=True)
+    aggregation_event_id: uuid.UUID = Field(foreign_key="billing.aggregation_event.id", nullable=True)
+
     cost_items: List[Usage] = Relationship(back_populates="billing_ledger")
+    user: User = Relationship(back_populates="billing_ledgers")
+    aggregation_event: "AggregationEvent" = Relationship(back_populates="billing_ledgers")
+
+
+class AggregationEvent(SQLModel, table=True):
+    __tablename__ = "aggregation_event"
+    __table_args__ = {"schema": "billing"}
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    run_time: int = Field()
+    timestamp: datetime = Field()
+
+    billing_ledgers: List[BillingLedger] = Relationship(back_populates="aggregation_event")
