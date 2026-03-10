@@ -1,3 +1,4 @@
+from sqlmodel import SQLModel
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -15,7 +16,6 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 
-from sqlmodel import SQLModel
 
 target_metadata = SQLModel.metadata
 

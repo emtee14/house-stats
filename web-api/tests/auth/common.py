@@ -2,6 +2,7 @@ import pytest
 
 from app.auth.native_auth_adapter import NativeAuthAdapter
 from app.models.auth import User
+from tests.common import db_session, engine, config
 
 
 @pytest.fixture

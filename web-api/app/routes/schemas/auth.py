@@ -21,11 +21,6 @@ class RegisterUserResponse(BaseModel):
     msg: str = "Successfully created user, please login to continue"
 
 
-class CreateApiTokenResponse(BaseModel):
-    expiry: str
-    token: str
-
-
 class RevokeApiTokenRequest(BaseModel):
     token: str
 

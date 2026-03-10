@@ -5,7 +5,9 @@ import pytest
 
 from app.billing.billing_aggregator import BillingAggregator
 from app.billing.stripe_adapter import StripePaymentAdapter
-
+from tests.common import db_session, engine, config
+from tests.auth.common import create_user
+from tests.billing.common import create_usage
 
 def test_get_users(db_session, create_user, create_usage):
     user = create_user(
@@ -284,7 +286,7 @@ def test_aggregate_two_ledgers_one_empty(db_session, create_user, create_usage):
     ledger_1 = biller.aggregate_user_billing(user, upto=current_time)
     biller.update_usage_events(ledger_1)
     with pytest.raises(ValueError) as e:
-        ledger_2 = biller.aggregate_user_billing(
+        biller.aggregate_user_billing(
             user, upto=current_time + timedelta(minutes=3)
         )
 
