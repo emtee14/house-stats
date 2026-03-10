@@ -32,11 +32,11 @@ class StripePaymentAdapter(PaymentBase):
         today = datetime.today()
 
         subscription = self._client.v1.subscriptions.create({
-            "customer_id": customer.id,
+            "customer": customer.id,
             "items": [
                 {"price": "price_1T1vV3IZoGcblMblif2jz5sc"}
             ],
-            "billing_cycle_anchor": datetime(day=28, month=today.month+1, year=today.year+1),
+            "billing_cycle_anchor": datetime(day=28, month=today.month, year=today.year),
             "collection_method": "charge_automatically"
         })
 
@@ -46,14 +46,16 @@ class StripePaymentAdapter(PaymentBase):
         session.commit()
 
 
-    def log_new_billing_event(self, event_id, user_id, event_value):
+    def log_new_billing_event(self, event_id, user_id, event_value) -> str:
         if event_id not in METERING_EVENTS:
             raise ValueError("Invalid event_id")
 
-        self._client.billing.meter_events.create({
+        meter_event = self._client.billing.meter_events.create({
             "event_name": event_id,
             "payload": {
                 "value": event_value,
                 "stripe_customer_id": user_id,
             }
         })
+
+        return meter_event["identifier"]
