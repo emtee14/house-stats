@@ -73,7 +73,7 @@ def test_aggregate_no_items(db_session, create_user, create_usage):
     biller = BillingAggregator(db_session)
 
     with pytest.raises(ValueError) as e:
-        _ = biller.aggregate_user_billing(user)
+        _ = biller.aggregate_user_billing(user, datetime.now(UTC))
 
     assert str(e.value) == "User has no usage recorded"
 
@@ -115,7 +115,7 @@ def test_aggregate_with_items(db_session, create_user, create_usage):
         timestamp=datetime.now(UTC) - timedelta(minutes=2),
     )
 
-    ledger = biller.aggregate_user_billing(user)
+    ledger = biller.aggregate_user_billing(user, datetime.now(UTC))
     biller.update_usage_events(ledger)
 
     assert ledger.total_tokens == sum(bills)
@@ -160,7 +160,7 @@ def test_aggregate_items_in_window(db_session, create_user, create_usage):
         timestamp=datetime.now(UTC) + timedelta(minutes=2),
     )
 
-    ledger = biller.aggregate_user_billing(user, upto=current_time)
+    ledger = biller.aggregate_user_billing(user, current_time)
     biller.update_usage_events(ledger)
 
     assert ledger.total_tokens == sum(bills) - bills[-1]
@@ -232,11 +232,11 @@ def test_aggregate_two_ledgers(db_session, create_user, create_usage):
         timestamp=current_time + timedelta(minutes=2),
     )
 
-    ledger_1 = biller.aggregate_user_billing(user, upto=current_time)
+    ledger_1 = biller.aggregate_user_billing(user, current_time)
     biller.update_usage_events(ledger_1)
 
     ledger_2 = biller.aggregate_user_billing(
-        user, upto=current_time + timedelta(minutes=3)
+        user, current_time + timedelta(minutes=3)
     )
     biller.update_usage_events(ledger_2)
 
@@ -262,32 +262,33 @@ def test_aggregate_two_ledgers_one_empty(db_session, create_user, create_usage):
         user=user,
         api_route="/users/",
         tokens=bills_1[0],
-        timestamp=current_time - timedelta(minutes=2),
+        timestamp=current_time - timedelta(minutes=5),
     )
     create_usage(
         user=user,
         api_route="/users/",
         tokens=bills_1[1],
-        timestamp=current_time - timedelta(minutes=2),
+        timestamp=current_time - timedelta(minutes=5),
     )
     create_usage(
         user=user,
         api_route="/users/",
         tokens=bills_1[2],
-        timestamp=current_time - timedelta(minutes=2),
+        timestamp=current_time - timedelta(minutes=5),
     )
     create_usage(
         user=user,
         api_route="/users/",
         tokens=bills_1[3],
-        timestamp=current_time - timedelta(minutes=2),
+        timestamp=current_time - timedelta(minutes=5),
     )
 
-    ledger_1 = biller.aggregate_user_billing(user, upto=current_time)
+    ledger_1 = biller.aggregate_user_billing(user, current_time)
     biller.update_usage_events(ledger_1)
+
     with pytest.raises(ValueError) as e:
         biller.aggregate_user_billing(
-            user, upto=current_time + timedelta(minutes=3)
+            user, current_time + timedelta(minutes=3)
         )
 
     assert ledger_1.total_tokens == sum(bills_1)
@@ -428,5 +429,5 @@ def test_aggregation_en_masse_multi_user(
                 for usage in usages_2:
                     assert usage in ledger.cost_items
             case user_3.id:
-                for usage in usages_2:
+                for usage in usages_3:
                     assert usage in ledger.cost_items

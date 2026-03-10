@@ -8,9 +8,25 @@ on:
     paths:
       - "web-api/**"
 
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: house
+          POSTGRES_PASSWORD: househousehouse
+          POSTGRES_DB: house_stats
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U testuser"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     strategy:
       matrix:
         python-version: ["3.13"]
@@ -18,6 +34,12 @@ jobs:
     defaults:
       run:
         working-directory: web-api
+
+    env:
+      DATABASE_URL: "postgresql+psycopg2://house:househousehouse@localhost/house_stats"
+      JWT_ALGORITHM: "HS256"
+      SECRET_KEY: "12f6240d3c24ee8b32df96fa21c91c5fc52e94343f1d6bed4f571867b063ef66"
+      STRIPE_API_TOKEN: ${{secrets.STRIPE_TEST_API_TOKEN}}
 
     steps:
       - uses: actions/checkout@v4
