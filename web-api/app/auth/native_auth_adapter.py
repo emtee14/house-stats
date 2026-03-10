@@ -13,19 +13,19 @@ from app.models.auth import User, RefreshToken
 
 class NativeAuthAdapter(AuthBase):
     def __init__(self, session: Session, secret_key: str, algorithm: str = "HS256") -> None:
-        self.session = session
+        self._session = session
         self._secret_key = secret_key
         self._algorithm = algorithm
 
     def get_user_by_email(self, email: str) -> User | None:
         stmt = select(User).where(User.email == email).limit(1)
-        user = self.session.exec(stmt).one_or_none()
+        user = self._session.exec(stmt).one_or_none()
 
         return user
 
     def get_user(self, user_id: str) -> User | None:
         stmt = select(User).where(User.id == user_id).limit(1)
-        user = self.session.exec(stmt).one_or_none()
+        user = self._session.exec(stmt).one_or_none()
         return user
 
     def add_new_user(self, user: User) -> User:
@@ -33,8 +33,8 @@ class NativeAuthAdapter(AuthBase):
         if dupe is not None:
             raise ValueError("User with that email address already exists.")
 
-        self.session.add(user)
-        self.session.commit()
+        self._session.add(user)
+        self._session.commit()
 
 
         return user
@@ -57,8 +57,8 @@ class NativeAuthAdapter(AuthBase):
             expires_at=expires_at,
         )
         token_record.set_token_hash(token)
-        self.session.add(token_record)
-        self.session.commit()
+        self._session.add(token_record)
+        self._session.commit()
 
         return token
 
@@ -73,7 +73,7 @@ class NativeAuthAdapter(AuthBase):
         token_hash = sha256(token.encode()).digest()
         stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash).limit(1)
 
-        refresh_token = self.session.exec(stmt).one_or_none()
+        refresh_token = self._session.exec(stmt).one_or_none()
         return refresh_token
 
     def refresh_token(self, token: str) -> str:
@@ -90,7 +90,7 @@ class NativeAuthAdapter(AuthBase):
         refr_token = self._verify_refresh_token(token)
         if refr_token is not None:
             refr_token.revoke_token()
-            self.session.commit()
+            self._session.commit()
             return token
         else:
             raise ValueError("Incorrect refresh token.")
