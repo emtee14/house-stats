@@ -1,11 +1,14 @@
 from datetime import datetime, UTC
 from hashlib import sha256
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import bcrypt
+from pydantic import EmailStr
 from sqlmodel import Field, SQLModel, Relationship
 import uuid
 
+if TYPE_CHECKING:
+    from app.models.billing import BillingLedger
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
@@ -13,16 +16,18 @@ class User(SQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
-    email: str = Field(index=True)
+    email: EmailStr = Field(index=True)
     password: bytes = Field()
 
     first_name: str = Field()
     last_name: str = Field()
 
     stripe_id: str = Field(index=True, nullable=True)
-    subcription_id: str = Field(index=True, nullable=True)
+    subscription_id: str = Field(index=True, nullable=True)
 
     refresh_tokens: List["RefreshToken"] = Relationship(back_populates="user")
+
+    billing_ledgers: List["BillingLedger"] = Relationship(back_populates="user")
 
 
     def set_password(self, password: str):
