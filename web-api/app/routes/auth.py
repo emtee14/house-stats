@@ -1,11 +1,21 @@
 from email_validator import validate_email, EmailNotValidError
 from fastapi import APIRouter, Depends, HTTPException, Response, Cookie, status
 from sqlmodel import Session
+from datetime import datetime
 
+from app.auth.api_tokens import ApiTokenAuth
 from app.auth.deps import get_current_user
 from app.db import get_session
-from app.models.auth import User
-from app.routes.schemas.auth import LoginRequest, LoginResponse, RegisterUserRequest, RegisterUserResponse
+from app.models.auth import User, ApiToken
+from app.routes.schemas.auth import (
+    LoginRequest,
+    LoginResponse,
+    RegisterUserRequest,
+    RegisterUserResponse,
+    CreateApiTokenResponse,
+    RevokeApiTokenRequest,
+    RevokeApiTokenResponse,
+)
 from app.auth.native_auth_adapter import NativeAuthAdapter
 from app.billing.stripe_adapter import StripePaymentAdapter
 from app.config import Config
@@ -14,19 +24,24 @@ router = APIRouter(tags=["Authentication"])
 
 
 # ======== Native authentication routes ========
-@router.post("/register",
-             responses={
-                 400: {
-                     "description": "A user has already been created with that email",
-                     "content": {
-                         "application/json": {
-                             "example": {"detail": "User with that email address already exists."}
-                         }
-                     },
-                 }
-             }
+@router.post(
+    "/register",
+    responses={
+        400: {
+            "description": "A user has already been created with that email",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "User with that email address already exists."
+                    }
+                }
+            },
+        }
+    },
 )
-def register_user(request: RegisterUserRequest, session: Session = Depends(get_session)) -> RegisterUserResponse:
+def register_user(
+    request: RegisterUserRequest, session: Session = Depends(get_session)
+) -> RegisterUserResponse:
     auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
 
     try:
@@ -52,23 +67,28 @@ def register_user(request: RegisterUserRequest, session: Session = Depends(get_s
     return RegisterUserResponse()
 
 
-@router.post("/login",
-             responses={
-                 400: {
-                     "description": "Incorrect email or password provided",
-                     "content": {
-                         "application/json": {
-                             "example": {"detail": "Incorrect email or password."}
-                         }
-                     },
-                 }
-             }
-             )
-def login_user(request: LoginRequest, response: Response, session: Session = Depends(get_session)):
+@router.post(
+    "/login",
+    responses={
+        400: {
+            "description": "Incorrect email or password provided",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Incorrect email or password."}
+                }
+            },
+        }
+    },
+)
+def login_user(
+    request: LoginRequest, response: Response, session: Session = Depends(get_session)
+):
     auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
 
     try:
-        access_token, refresh_token = auth_adapter.login(request.username, request.password)
+        access_token, refresh_token = auth_adapter.login(
+            request.username, request.password
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -77,14 +97,16 @@ def login_user(request: LoginRequest, response: Response, session: Session = Dep
         value=refresh_token,
         httponly=True,
         secure=True,
-        samesite="lax"
+        samesite="lax",
     )
 
     return LoginResponse(access_token=access_token)
 
+
 @router.post("/refresh")
-def refresh_jwt(refresh_token: str = Cookie(None),
-                  session: Session = Depends(get_session)):
+def refresh_jwt(
+    refresh_token: str = Cookie(None), session: Session = Depends(get_session)
+):
     if refresh_token is None:
         raise HTTPException(status_code=400, detail="No refresh token present")
 
@@ -99,8 +121,9 @@ def refresh_jwt(refresh_token: str = Cookie(None),
 
 
 @router.post("/logout")
-def logout_user(refresh_token: str = Cookie(None),
-                  session: Session = Depends(get_session)):
+def logout_user(
+    refresh_token: str = Cookie(None), session: Session = Depends(get_session)
+):
     if refresh_token is None:
         raise HTTPException(status_code=400, detail="No refresh token present")
 
@@ -119,6 +142,7 @@ def logout_user(refresh_token: str = Cookie(None),
 def oauth_login(provider: str):
     pass
 
+
 @router.get("/oauth/{provider}/callback")
 def oauth_callback(provider: str):
     pass
@@ -126,13 +150,21 @@ def oauth_callback(provider: str):
 
 # ======== Token for MCP and interaction from a system ========
 @router.post("/token/create")
-def create_api_token():
-    pass
+def create_api_token(user: User = Depends(get_current_user()),
+                     session : Session = Depends(get_session)) -> CreateApiTokenResponse:
+    api_token_adap = ApiTokenAuth(session)
 
-@router.post("/token/refresh")
-def refresh_api_token():
-    pass
+
+    token_str, token_record = api_token_adap.create_token(user)
+
+    return CreateApiTokenResponse(token=token_str, expiry=token_record.expires_at.strftime("%Y-%m-%d %H:%M:%S"))
+
 
 @router.post("/token/delete")
-def delete_api_token():
-    pass
+def delete_api_token(request: RevokeApiTokenRequest, user: User = Depends(get_current_user()),
+                     session : Session = Depends(get_session)) -> RevokeApiTokenResponse:
+    api_token_adap = ApiTokenAuth(session)
+
+    api_token_adap.revoke_token(user, request.token)
+
+    return RevokeApiTokenResponse()
