@@ -4,9 +4,7 @@ import pytest
 from sqlalchemy import create_engine, Engine, text
 from sqlmodel import SQLModel, Session
 
-from app.auth.native_auth_adapter import NativeAuthAdapter
 from app.config import Config
-from app.models.auth import User
 
 
 class FakeData:
@@ -30,6 +28,7 @@ def engine(config) -> Engine:
     SQLModel.metadata.create_all(engine)
 
     return engine
+
 
 @pytest.fixture
 def db_session(engine) -> Generator[Session]:
