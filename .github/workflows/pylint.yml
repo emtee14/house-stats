@@ -36,6 +36,6 @@ jobs:
         run: |
           uv sync --project app --all-extras --dev
       - name: Analysing the code with pylint
-        working-directory: app
+        working-directory: web-api
         run: |
           uv run ruff check $(git ls-files '*.py')
