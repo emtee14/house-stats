@@ -7,11 +7,6 @@ from sqlmodel import SQLModel, Session
 from app.config import Config
 
 
-class FakeData:
-    def __init__(self, sales):
-        self.sales = sales
-
-
 @pytest.fixture
 def config() -> Config:
     return Config()
