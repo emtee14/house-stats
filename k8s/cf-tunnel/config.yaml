@@ -1,0 +1,8 @@
+tunnel: house-api
+credentials-file: /etc/cloudflared/tunnel-creds.json
+origincert: /etc/cloudflared/cert.pem
+
+ingress:
+  - hostname: api.housestats.co.uk
+    service: http://api-service.default.svc.cluster.local:80
+  - service: http_status:404
