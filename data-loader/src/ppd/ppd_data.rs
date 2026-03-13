@@ -3,7 +3,7 @@ use log::info;
 use regex::{Captures};
 use sha2::{Digest, Sha256};
 use serde::Deserialize;
-use crate::common::{HouseRow, PostcodeRow, RowType, SaleRow, POSTCODE_REGEX};
+use super::common::{HouseRow, PostcodeRow, RowType, SaleRow, POSTCODE_REGEX};
 
 const MONTHLY_FILE: &str = "http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-monthly-update.txt";
 const MONO_FILE: &str = "http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-complete.txt";

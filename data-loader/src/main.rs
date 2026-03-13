@@ -4,13 +4,13 @@ use log::{error, info};
 use simple_logger;
 use tokio::time::sleep;
 use crate::database::InsertErrors;
-use crate::ppd_data::check_for_update;
+use crate::ppd::db_ops::insert_ppd_data;
 
 mod database;
 mod config;
+mod ppd;
 mod querys;
-mod ppd_data;
-mod common;
+mod epc;
 
 #[tokio::main]
 async fn main() {
@@ -24,16 +24,16 @@ async fn main() {
 
     let mut database = database::HouseStatsDatabase::new(config).await.unwrap();
 
+    epc::epc_data::load_epc("data/all-domestic-certificates", &mut database).await.unwrap();
+
+
     loop {
-
-
-
         info!("Checking for updates...");
-        let new_sales = check_for_update(database.last_ppd_file).await.unwrap();
+        let new_sales = ppd::ppd_data::check_for_update(database.last_ppd_file).await.unwrap();
         if new_sales != String::new() {
             info!("New PPD data found");
             info!("Updating database...");
-            match database.insert_ppd_data(&new_sales).await {
+            match insert_ppd_data(&mut database, &new_sales).await {
                 Ok(_) => {}
                 Err(InsertErrors::PostgresError(e)) => {error!("Unable to update PPD data - {}", e);}
                 Err(InsertErrors::CsvError(e)) => {error!("Unable to update PPD data - {}", e);}
