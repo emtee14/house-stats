@@ -15,7 +15,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-
+from app.db import engine
+from app.models import auth
+from app.models import billing
 
 target_metadata = SQLModel.metadata
 
