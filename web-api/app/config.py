@@ -15,5 +15,7 @@ class Config:
 
     CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND")
     CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL")
+    REDIS_AGG_CACHE: str = os.environ.get("REDIS_AGG_CACHE")
+
 
     STRIPE_API_TOKEN: str = os.environ.get("STRIPE_API_TOKEN")
