@@ -136,7 +136,7 @@ This will start:
 
 ### Database
 
-A PostgreSQL instance is required for production deployments. Database migrations are managed using **Alembic**.
+A PostgreSQL instance is required for production deployments. Database migrations are managed using Alembic.
 
 ### Kubernetes
 
@@ -205,6 +205,28 @@ kubectl apply -f cloudflared.yaml
 ```
 
 ---
+
+## Data Ingest
+
+### Building
+```bash
+cd data-loader
+```
+
+```bash
+cargo build --package data-loader --bin data-loader --profile release
+```
+
+Define environment variables
+```
+DATABASE_URL = "host=localhost user=postgres password=mysecretpassword dbname=house_stats"
+DATABASE_NAME = "house_stats"
+```
+
+```bash
+./data-loader
+```
+
 
 ## API Documentation
 
