@@ -1,11 +1,9 @@
 from typing import Dict
 
 from app.stats.base import Statistic
-from app.stats.registry import register
 
 import polars as pl
 
-@register("v1", "avg_house_tenancy")
 class AverageHouseTenancy(Statistic):
     name = "avg_house_tenancy"
     description = "Average tenancy for houses in that area"

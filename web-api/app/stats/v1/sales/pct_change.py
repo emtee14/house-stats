@@ -2,10 +2,8 @@ from typing import Dict
 import polars as pl
 
 from app.stats.base import Statistic
-from app.stats.registry import register
 
 
-@register("v1", "std_price")
 class PctChangeHousePrice(Statistic):
     name = "pct_change_price"
     description = "The percent change of a sales price"

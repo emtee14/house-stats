@@ -13,7 +13,7 @@ from app.routes.schemas.auth import (
     RegisterUserResponse,
     CreateApiTokenResponse,
     RevokeApiTokenRequest,
-    RevokeApiTokenResponse,
+    RevokeApiTokenResponse, CreateApiTokenRequest, ListApiTokenResponse, Token,
 )
 from app.auth.native_auth_adapter import NativeAuthAdapter
 from app.billing.stripe_adapter import StripePaymentAdapter
@@ -136,34 +136,34 @@ def logout_user(
     return Response(status_code=status.HTTP_200_OK)
 
 
-# ======== Route for logging in via OAuth provider ========
-@router.get("/oauth/{provider}/login")
-def oauth_login(provider: str):
-    pass
 
-
-@router.get("/oauth/{provider}/callback")
-def oauth_callback(provider: str):
-    pass
-
-
-# ======== Token for MCP and interaction from a system ========
+# ======== Token for interaction from a system ========
 @router.post("/token/create")
-def create_api_token(user: User = Depends(get_current_user),
+def create_api_token(request: CreateApiTokenRequest, user: User = Depends(get_current_user),
                      session : Session = Depends(get_session)) -> CreateApiTokenResponse:
     api_token_adap = ApiTokenAuth(session)
 
 
-    token_str, token_record = api_token_adap.create_token(user)
+    token_str, token_record = api_token_adap.create_token(user, request.name, expiry_days=request.expiry)
 
     return CreateApiTokenResponse(token=token_str, expiry=token_record.expires_at.strftime("%Y-%m-%d %H:%M:%S"))
 
 
-@router.post("/token/delete")
+@router.post("/token/revoke")
 def delete_api_token(request: RevokeApiTokenRequest, user: User = Depends(get_current_user),
                      session : Session = Depends(get_session)) -> RevokeApiTokenResponse:
     api_token_adap = ApiTokenAuth(session)
 
-    api_token_adap.revoke_token(user, request.token)
+    api_token_adap.revoke_token(user, request.token_id)
 
     return RevokeApiTokenResponse()
+
+
+@router.get("/token/list")
+def list_api_tokens(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    user_tokens = list(user.api_tokens)
+    user_tokens = list(map(lambda x: Token(id=x.id, name=x.name,
+                                      expiry=str(x.expires_at), revoked=x.revoked),
+                      user_tokens))
+
+    return ListApiTokenResponse(tokens=user_tokens)

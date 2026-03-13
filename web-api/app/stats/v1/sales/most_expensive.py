@@ -1,12 +1,10 @@
 from typing import Dict
 
 from app.stats.base import Statistic
-from app.stats.registry import register
 
 import polars as pl
 
 
-@register("v1", "most_expensive_sale")
 class MostExpensiveSale(Statistic):
     name = "most_expensive_sale"
     description = "Most expensive sale"

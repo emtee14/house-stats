@@ -1,11 +1,9 @@
 from typing import Dict
 
 from app.stats.base import Statistic
-from app.stats.registry import register
 
 import polars as pl
 
-@register("v1", "count_price")
 class CountHousePrice(Statistic):
     name = "count_price"
     description = "Count the total sales"
@@ -44,7 +42,6 @@ class CountHousePrice(Statistic):
         return result
 
 
-@register("v1", "count_sales")
 class CountHouseTypes(Statistic):
     name = "count_house_types"
     description = "Count different types of houses"

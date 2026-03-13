@@ -1,12 +1,10 @@
 from typing import Dict
 
 from app.stats.base import Statistic
-from app.stats.registry import register
 
 import polars as pl
 
 
-@register("v1", "mean_price")
 class MeanHousePrice(Statistic):
     name = "mean_price"
     description = "Average sale price"

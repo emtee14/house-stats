@@ -1,11 +1,9 @@
 from typing import Dict
 
 from app.stats.base import Statistic
-from app.stats.registry import register
 
 import polars as pl
 
-@register("v1", "std_price")
 class StandardDevHousePrice(Statistic):
     name = "std_house_price"
     description = "Standard deviation of sale price"

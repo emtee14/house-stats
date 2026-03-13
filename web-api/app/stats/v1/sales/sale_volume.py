@@ -2,10 +2,8 @@ from typing import Dict
 import polars as pl
 
 from app.stats.base import Statistic
-from app.stats.registry import register
 
 
-@register("v1", "std_price")
 class SaleVolumeHousePrice(Statistic):
     name = "sale_volume"
     description = "Total sales volume for time periods 1mo, 3mo, 6mo, and 12mo"
