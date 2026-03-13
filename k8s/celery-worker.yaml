@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-service
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-service
+  template:
+    metadata:
+      labels:
+        app: worker-service
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/emtee14/house-stats-web-api:latest
+          imagePullPolicy: Always
+          command: ["uv"]
+          args:
+            [
+              "run",
+              "celery",
+              "-A",
+              "app.celery:celery_worker",
+              "worker",
+              "--loglevel=info"
+            ]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: DATABASE_URL
+            - name: CELERY_BROKER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: REDIS_URL
+            - name: CELERY_RESULT_BACKEND
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: REDIS_URL
+            - name: STRIPE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: STRIPE_API_TOKEN
+      imagePullSecrets:
+        - name: ghcr-secret
