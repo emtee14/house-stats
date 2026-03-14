@@ -21,5 +21,5 @@ celery_worker.conf.beat_schedule = {
 }
 
 
-from app.tasks import billing #noqa: F403
-from app.tasks import stats #noqa: F403
+from app.tasks import billing #noqa: E402,F401
+from app.tasks import stats #noqa: E402,F401
