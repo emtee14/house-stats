@@ -12,8 +12,10 @@ dependencies = [
     "fastapi>=0.128.0",
     "httpx>=0.28.1",
     "polars",
+    "psycopg2>=2.9.11",
     "psycopg2-binary>=2.9.11",
     "psycopg[binary]>=3.3.2",
+    "pydantic-settings>=2.13.1",
     "pyjwt>=2.11.0",
     "pytest-cov>=7.0.0",
     "python-dateutil>=2.9.0.post0",
@@ -31,6 +33,7 @@ dev-dependencies = [
   "pytest>=9.0.2",
   "pytest-asyncio",
   "ruff>=0.14.10",
+  "testcontainers>=4.14.1",
 ]
 
 [tool.pytest.ini_options]
@@ -38,4 +41,4 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["F811", "F401"]
+"tests/*" = ["F811", "F401", "F403"]
