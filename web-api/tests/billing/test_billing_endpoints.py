@@ -200,8 +200,6 @@ def test_get_usage_trends_e2e(client: TestClient, db_session, create_user, login
         db_session.add(usage)
     db_session.commit()
 
-    start_date = (now - timedelta(days=3)).isoformat()
-    end_date = now.isoformat()
     query = {
         "start": (now - timedelta(days=3)).isoformat(),
         "end": now.isoformat()
