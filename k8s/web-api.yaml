@@ -50,6 +50,11 @@ spec:
                 secretKeyRef:
                   name: api-secrets
                   key: STRIPE_API_TOKEN
+            - name: STRIPE_TOKEN_PRODUCT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: STRIPE_TOKEN_PRODUCT_ID
             - name: JWT_ALGORITHM
               valueFrom:
                 secretKeyRef:

@@ -62,11 +62,11 @@ The loader is implemented in Rust to allow fast ingestion of large datasets such
 
 The platform is composed of several services working together:
 
-- **FastAPI Web API** for request handling
-- **Celery workers** for asynchronous tasks
-- **PostgreSQL** for data storage
-- **Redis** for task queuing
-- **Docker / Kubernetes** for deployment
+- FastAPI Web API for request handling
+- Celery workers for asynchronous tasks
+- PostgreSQL for data storage
+- Redis for task queuing
+- Docker / Kubernetes for deployment
 
 ---
 
@@ -110,7 +110,7 @@ uv run fastapi dev app/main.py
 Start the Celery worker:
 
 ```bash
-uv run celery -A app.celery worker -l info
+uv run celery -A app.celery:celery_worker worker -B
 ```
 
 ---

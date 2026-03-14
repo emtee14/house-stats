@@ -43,10 +43,20 @@ spec:
                 secretKeyRef:
                   name: api-secrets
                   key: REDIS_URL
+            - name: REDIS_AGG_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: REDIS_URL
             - name: STRIPE_API_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: api-secrets
                   key: STRIPE_API_TOKEN
+            - name: STRIPE_TOKEN_PRODUCT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: STRIPE_TOKEN_PRODUCT_ID
       imagePullSecrets:
         - name: ghcr-secret
