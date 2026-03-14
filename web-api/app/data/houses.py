@@ -1,6 +1,4 @@
-import re
 
-from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.models.housing_data import EpcCertificate, House, Sale
