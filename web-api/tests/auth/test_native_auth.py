@@ -26,7 +26,7 @@ def test_register_user(db_session, settings):
 
 
 def test_create_dupe_user(db_session, create_user, settings):
-    user = create_user(db_session,
+    user = create_user(
         email="test@example.com",
         first_name="John",
         last_name="Doe",
