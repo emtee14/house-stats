@@ -29,6 +29,8 @@ class PctChangeHousePrice(Statistic):
 
             # compute per type
             for t, part in data.partition_by("type", as_dict=True).items():
+                if isinstance(t, tuple):
+                    t = t[0]
                 df_type = self._calc_period_perc(part, every)
 
                 for date, val in zip(df_type["date"], df_type["pct_change"]):
