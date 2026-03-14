@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 
 from sqlmodel import Session
 
-from tests.common import config, engine, db_session
+from tests.common import *
 from app.data.sales import SalesDataset
 
 def test_sales_dataset(db_session: Session):
