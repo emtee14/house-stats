@@ -9,12 +9,15 @@ class Settings(BaseSettings):
     secret_key: str = "dev-secret"
     jwt_algorithm: str = "HS256"
 
-    celery_backend_results: str = ""
+    celery_result_backend: str = ""
     celery_broker_url: str = ""
 
-    stripe_api_token: str = ""
+    redis_agg_cache: str = ""
 
-    model_config = SettingsConfigDict(env_file=".env")
+    stripe_api_token: str = ""
+    billing_portal: str = ""
+
+    model_config = SettingsConfigDict(env_file=".env.dev")
 
 load_dotenv()
 
