@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     stripe_api_token: str = ""
     billing_portal: str = ""
+    stripe_token_product_id: str = ""
 
     model_config = SettingsConfigDict(env_file=".env.dev")
 

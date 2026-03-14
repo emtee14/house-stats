@@ -41,6 +41,7 @@ jobs:
       JWT_ALGORITHM: "HS256"
       SECRET_KEY: "12f6240d3c24ee8b32df96fa21c91c5fc52e94343f1d6bed4f571867b063ef66"
       STRIPE_API_TOKEN: ${{secrets.STRIPE_TEST_API_TOKEN}}
+      STRIPE_TOKEN_PRODUCT_ID: ${{secrets.STRIPE_TOKEN_PRODUCT_ID}}
 
     steps:
       - uses: actions/checkout@v4

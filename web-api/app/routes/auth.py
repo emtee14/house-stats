@@ -68,7 +68,7 @@ def register_user(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    payment_adap = StripePaymentAdapter(settings.stripe_api_token)
+    payment_adap = StripePaymentAdapter(settings)
     payment_adap.setup_user(user, session)
 
     return RegisterUserResponse()
