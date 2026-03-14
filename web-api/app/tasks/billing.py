@@ -7,7 +7,10 @@ from sqlmodel import Session
 from app.billing.billing_aggregator import BillingAggregator
 from app.celery import celery_worker
 from app.models.billing import Usage
+from app.settings import get_settings
 from app.tasks.base_task import DatabaseTask
+
+settings = get_settings()
 
 
 @celery_worker.task(base=DatabaseTask)
@@ -34,7 +37,7 @@ def log_token_usage(
 def aggregate_current_billing(
     session: Session = None, billing_hour: int = 23
 ) -> uuid.UUID:
-    aggregator = BillingAggregator(session)
+    aggregator = BillingAggregator(session, settings)
 
     event = aggregator.aggregate_en_masse(billing_hour)
 
