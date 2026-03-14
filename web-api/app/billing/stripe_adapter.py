@@ -34,7 +34,6 @@ class StripePaymentAdapter(PaymentBase):
                 },
             }
         )
-        today = datetime.today()
 
         subscription = self._client.v1.subscriptions.create(
             {
