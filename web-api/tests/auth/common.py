@@ -1,6 +1,6 @@
 import pytest
 
-from app.auth.native_auth_adapter import NativeAuthAdapter
+from app.auth.native_auth_adapter import NativeAuth
 from app.models.auth import User
 from tests.common import *
 
@@ -11,12 +11,10 @@ def create_user(db_session, settings):
         user = User(email=email, first_name=first_name, last_name=last_name)
         user.set_password(password)
 
-        auth_adap = NativeAuthAdapter(
+        auth_adap = NativeAuth(
             db_session, settings.secret_key, settings.jwt_algorithm
         )
         new_user = auth_adap.add_new_user(user)
-
-        db_session.commit()
 
         return new_user
 
@@ -26,7 +24,7 @@ def create_user(db_session, settings):
 @pytest.fixture
 def login_user(db_session, settings):
     def _login(email: str, password: str):
-        auth_adap = NativeAuthAdapter(
+        auth_adap = NativeAuth(
             db_session, settings.secret_key, settings.jwt_algorithm
         )
         jwt, _ = auth_adap.login(email, password)

@@ -2,7 +2,7 @@ import pytest
 from sqlmodel import select
 import jwt
 
-from app.auth.native_auth_adapter import NativeAuthAdapter
+from app.auth.native_auth_adapter import NativeAuth
 from app.models.auth import User
 from tests.common import *
 from tests.auth.common import create_user
@@ -16,7 +16,7 @@ def test_register_user(db_session, settings):
     )
     user.set_password("MyVeryStrongPassword")
 
-    auth_adap = NativeAuthAdapter(db_session, settings.secret_key, settings.jwt_algorithm)
+    auth_adap = NativeAuth(db_session, settings.secret_key, settings.jwt_algorithm)
     new_user = auth_adap.add_new_user(user)
 
     assert new_user.id is not None
@@ -26,14 +26,14 @@ def test_register_user(db_session, settings):
 
 
 def test_create_dupe_user(db_session, create_user, settings):
-    user = create_user(
+    user = create_user(db_session,
         email="test@example.com",
         first_name="John",
         last_name="Doe",
         password="Password123",
     )
     try:
-        auth_adap = NativeAuthAdapter(
+        auth_adap = NativeAuth(
             db_session, settings.secret_key, settings.jwt_algorithm
         )
         auth_adap.add_new_user(user)
@@ -50,7 +50,7 @@ def test_fetch_by_email(db_session, create_user, settings):
     email = "test@example.com"
     user = create_user(email=email, first_name="John", last_name="Doe", password="")
 
-    auth_adap = NativeAuthAdapter(db_session, settings.secret_key, settings.jwt_algorithm)
+    auth_adap = NativeAuth(db_session, settings.secret_key, settings.jwt_algorithm)
 
     fetched_user = auth_adap.get_user_by_email(email)
     assert fetched_user.email == email
@@ -62,7 +62,7 @@ def test_fetch_by_email_fail(db_session, create_user, settings):
     email = "test@example.com"
     create_user(email=email, first_name="John", last_name="Doe", password="")
 
-    auth_adap = NativeAuthAdapter(db_session, settings.secret_key, settings.jwt_algorithm)
+    auth_adap = NativeAuth(db_session, settings.secret_key, settings.jwt_algorithm)
 
     fetched_user = auth_adap.get_user_by_email("incorrect-email@example.com")
 
@@ -73,7 +73,7 @@ def test_login(db_session, create_user, settings):
     email = "test@example.com"
     passwd = "Test-password-12328"
 
-    auth_adap = NativeAuthAdapter(db_session, settings.secret_key, settings.jwt_algorithm)
+    auth_adap = NativeAuth(db_session, settings.secret_key, settings.jwt_algorithm)
 
     user = create_user(email=email, first_name="John", last_name="Doe", password=passwd)
     jwt_token, refresh_token = auth_adap.login(email, passwd)
@@ -87,7 +87,7 @@ def test_login(db_session, create_user, settings):
 def test_bad_email_login(db_session, create_user, settings):
     email = "test@example.com"
     passwd = "Test-password-12328"
-    auth_adap = NativeAuthAdapter(db_session, settings.secret_key, settings.jwt_algorithm)
+    auth_adap = NativeAuth(db_session, settings.secret_key, settings.jwt_algorithm)
 
     create_user(email=email, first_name="John", last_name="Doe", password=passwd)
 
@@ -98,7 +98,7 @@ def test_bad_email_login(db_session, create_user, settings):
 def test_bad_password_login(db_session, create_user, settings):
     email = "test@example.com"
     passwd = "Test-password-12328"
-    auth_adap = NativeAuthAdapter(db_session, settings.secret_key, settings.jwt_algorithm)
+    auth_adap = NativeAuth(db_session, settings.secret_key, settings.jwt_algorithm)
 
     create_user(email=email, first_name="John", last_name="Doe", password=passwd)
 
