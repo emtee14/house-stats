@@ -17,7 +17,7 @@ from app.routes.schemas.auth import (
 )
 from app.auth.native_auth_adapter import NativeAuthAdapter
 from app.billing.stripe_adapter import StripePaymentAdapter
-from app.config import Config
+from app.config import Settings, get_settings
 
 router = APIRouter(tags=["Authentication"])
 
@@ -25,6 +25,9 @@ router = APIRouter(tags=["Authentication"])
 # ======== Native authentication routes ========
 @router.post(
     "/register",
+    response_model=RegisterUserResponse,
+    summary="Register a new user",
+    description="Creates a new user account with email and password authentication and initialises billing.",
     responses={
         400: {
             "description": "A user has already been created with that email",
@@ -39,9 +42,11 @@ router = APIRouter(tags=["Authentication"])
     },
 )
 def register_user(
-    request: RegisterUserRequest, session: Session = Depends(get_session)
+        request: RegisterUserRequest,
+        session: Session = Depends(get_session),
+        settings: Settings = Depends(get_settings)
 ) -> RegisterUserResponse:
-    auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
+    auth_adapter = NativeAuthAdapter(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
         validate_email(request.email, check_deliverability=False)
@@ -60,7 +65,7 @@ def register_user(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    payment_adap = StripePaymentAdapter(Config.STRIPE_API_TOKEN)
+    payment_adap = StripePaymentAdapter(settings.stripe_api_token)
     payment_adap.setup_user(user, session)
 
     return RegisterUserResponse()
@@ -68,6 +73,9 @@ def register_user(
 
 @router.post(
     "/login",
+    response_model=LoginResponse,
+    summary="User login",
+    description="Authenticates a user using email and password and returns a JWT access token while setting a refresh token cookie.",
     responses={
         400: {
             "description": "Incorrect email or password provided",
@@ -80,13 +88,15 @@ def register_user(
     },
 )
 def login_user(
-    request: LoginRequest, response: Response, session: Session = Depends(get_session)
+        request: LoginRequest, response: Response,
+        session: Session = Depends(get_session),
+        settings: Settings = Depends(get_settings)
 ):
-    auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
+    auth_adapter = NativeAuthAdapter(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
         access_token, refresh_token = auth_adapter.login(
-            request.username, request.password
+            request.email, request.password
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -102,14 +112,21 @@ def login_user(
     return LoginResponse(access_token=access_token)
 
 
-@router.post("/refresh")
+@router.post(
+    "/refresh",
+    response_model=LoginResponse,
+    summary="Refresh access token",
+    description="Uses the refresh token cookie to generate a new JWT access token."
+)
 def refresh_jwt(
-    refresh_token: str = Cookie(None), session: Session = Depends(get_session)
+        refresh_token: str = Cookie(None),
+        session: Session = Depends(get_session),
+        settings: Settings = Depends(get_settings)
 ):
     if refresh_token is None:
         raise HTTPException(status_code=400, detail="No refresh token present")
 
-    auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
+    auth_adapter = NativeAuthAdapter(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
         access_token = auth_adapter.refresh_token(refresh_token)
@@ -119,14 +136,20 @@ def refresh_jwt(
     return LoginResponse(access_token=access_token)
 
 
-@router.post("/logout")
+@router.post(
+    "/logout",
+    summary="Logout user",
+    description="Revokes the refresh token associated with the current session and logs the user out."
+)
 def logout_user(
-    refresh_token: str = Cookie(None), session: Session = Depends(get_session)
+        refresh_token: str = Cookie(None),
+        session: Session = Depends(get_session),
+        settings: Settings = Depends(get_settings)
 ):
     if refresh_token is None:
         raise HTTPException(status_code=400, detail="No refresh token present")
 
-    auth_adapter = NativeAuthAdapter(session, Config.SECRET_KEY, Config.JWT_ALGORITHM)
+    auth_adapter = NativeAuthAdapter(session, settings.secret_key, session.join_transaction_mode)
 
     try:
         auth_adapter.revoke_refresh_token(refresh_token)
@@ -136,19 +159,13 @@ def logout_user(
     return Response(status_code=status.HTTP_200_OK)
 
 
-# ======== Route for logging in via OAuth provider ========
-@router.get("/oauth/{provider}/login")
-def oauth_login(provider: str):
-    pass
-
-
-@router.get("/oauth/{provider}/callback")
-def oauth_callback(provider: str):
-    pass
-
-
 # ======== Token for MCP and interaction from a system ========
-@router.post("/token/create")
+@router.post(
+    "/token/create",
+    response_model=CreateApiTokenResponse,
+    summary="Create API token",
+    description="Generates a new API token for the authenticated user for programmatic access (e.g., MCP integrations)."
+)
 def create_api_token(user: User = Depends(get_current_user),
                      session : Session = Depends(get_session)) -> CreateApiTokenResponse:
     api_token_adap = ApiTokenAuth(session)
@@ -159,7 +176,12 @@ def create_api_token(user: User = Depends(get_current_user),
     return CreateApiTokenResponse(token=token_str, expiry=token_record.expires_at.strftime("%Y-%m-%d %H:%M:%S"))
 
 
-@router.post("/token/delete")
+@router.post(
+    "/token/delete",
+    response_model=RevokeApiTokenResponse,
+    summary="Revoke API token",
+    description="Revokes an API token belonging to the authenticated user so it can no longer be used for authentication."
+)
 def delete_api_token(request: RevokeApiTokenRequest, user: User = Depends(get_current_user),
                      session : Session = Depends(get_session)) -> RevokeApiTokenResponse:
     api_token_adap = ApiTokenAuth(session)

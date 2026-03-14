@@ -5,7 +5,7 @@ import time
 import pytest
 
 from app.auth.api_tokens import ApiTokenAuth
-from tests.common import db_session, engine, config
+from tests.common import *
 from tests.auth.common import create_user
 
 def test_new_token(db_session, create_user):

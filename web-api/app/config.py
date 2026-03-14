@@ -1,19 +1,23 @@
-import os
+from functools import lru_cache
+
 from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-if os.environ.get("ENV") == "dev":
-    load_dotenv(".env.dev")
-elif os.environ.get("ENV") == "test":
-    load_dotenv(".env.test")
+class Settings(BaseSettings):
+    database_url: str = ""
+    secret_key: str = "dev-secret"
+    jwt_algorithm: str = "HS256"
 
+    celery_backend_results: str = ""
+    celery_broker_url: str = ""
 
-class Config:
-    DATABASE_URL: str = os.environ.get("DATABASE_URL")
-    SECRET_KEY: str = os.environ.get("SECRET_KEY")
-    JWT_ALGORITHM: str = os.environ.get("JWT_ALGORITHM")
+    stripe_api_token: str = ""
 
-    CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND")
-    CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL")
+    model_config = SettingsConfigDict(env_file=".env")
 
-    STRIPE_API_TOKEN: str = os.environ.get("STRIPE_API_TOKEN")
+load_dotenv()
+
+@lru_cache
+def get_settings():
+    return Settings()
