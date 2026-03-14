@@ -66,6 +66,7 @@ def settings(postgres_container, redis_url) -> Settings:
         secret_key=os.environ.get("SECRET_KEY"),
         jwt_algorithm=os.environ.get("JWT_ALGORITHM"),
         stripe_api_token=os.environ.get("STRIPE_API_TOKEN"),
+        stripe_token_product_id=os.environ.get("STRIPE_TOKEN_PRODUCT_ID"),
     )
 
 
