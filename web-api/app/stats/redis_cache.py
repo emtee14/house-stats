@@ -1,5 +1,5 @@
 import json
-from typing import Dict
+from typing import Any, Dict
 
 import redis
 
@@ -14,3 +14,9 @@ class RedisAggCache:
             return json.loads(result)
 
         return None
+
+    def cache_agg(self, aggregation: str, data_id: str, data: Dict[str, Any]):
+        self._redis.set(
+            f"{data_id}-{aggregation}",
+            json.dumps(data, default=str),
+        )
