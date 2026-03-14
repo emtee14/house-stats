@@ -1,17 +1,19 @@
-from datetime import datetime
+from datetime import datetime, timedelta, UTC
 
 import stripe
 from sqlmodel import Session
 
 from app.billing.payment_base import PaymentBase
 from app.models.auth import User
+from app.settings import Settings
 
 METERING_EVENTS = ["api_requests"]
 
 
 class StripePaymentAdapter(PaymentBase):
-    def __init__(self, token):
-        self._connect_sdk(token)
+    def __init__(self, settings: Settings):
+        self._settings = settings
+        self._connect_sdk(settings.stripe_api_token)
 
     def _connect_sdk(self, token):
         self._client = stripe.StripeClient(token)
@@ -37,11 +39,10 @@ class StripePaymentAdapter(PaymentBase):
         subscription = self._client.v1.subscriptions.create(
             {
                 "customer": customer.id,
-                "items": [{"price": "price_1T1vV3IZoGcblMblif2jz5sc"}],
-                "billing_cycle_anchor": datetime(
-                    day=28, month=today.month, year=today.year
-                ),
+                "items": [{"price": self._settings.stripe_token_product_id}],
+                "billing_cycle_anchor": datetime.now(UTC) + timedelta(days=28),
                 "collection_method": "charge_automatically",
+                "trial_end": datetime.now(UTC) + timedelta(days=28),
             }
         )
 

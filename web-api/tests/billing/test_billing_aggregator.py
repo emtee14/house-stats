@@ -305,7 +305,7 @@ def test_aggregation_en_masse_single_user(
         password="Password123",
     )
 
-    stripe_adap = StripePaymentAdapter(settings.stripe_api_token)
+    stripe_adap = StripePaymentAdapter(settings)
     stripe_adap.setup_user(user, db_session)
 
     bills = [50, 100, 150, 200]
@@ -370,7 +370,7 @@ def test_aggregation_en_masse_multi_user(
         password="Password123",
     )
 
-    stripe_adap = StripePaymentAdapter(settings.stripe_api_token)
+    stripe_adap = StripePaymentAdapter(settings)
     stripe_adap.setup_user(user_1, db_session)
     stripe_adap.setup_user(user_2, db_session)
     stripe_adap.setup_user(user_3, db_session)
