@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 
 from app.auth.deps import get_current_user_with_api_token
+from app.billing.deps import bill_tokens
 from app.data.houses import HouseDataset
 from app.db import get_session
 from app.models.auth import User
@@ -20,11 +21,13 @@ router = APIRouter(tags=["Houses"])
     "/postcode/{postcode}",
     response_model=HousesByPostcodeResponse,
     summary="List houses for a postcode",
+    description="Returns the houses found for the provided postcode. Billing note: this endpoint costs 1 token per successful request.",
 )
 def get_houses_by_postcode(
     postcode: str,
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user_with_api_token),
+    _ = Depends(lambda: bill_tokens(1))
 ) -> HousesByPostcodeResponse:
     dataset = HouseDataset(session)
     houses = dataset.list_by_postcode(postcode)
@@ -48,11 +51,13 @@ def get_houses_by_postcode(
     "/{houseid}",
     response_model=HouseDetailResponse,
     summary="Get house details",
+    description="Returns house details, including previous sales and linked EPC certificates. Billing note: this endpoint costs 2 tokens per successful request.",
 )
 def get_house_details(
     houseid: str,
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user_with_api_token),
+    _ = Depends(lambda: bill_tokens(2))
 ) -> HouseDetailResponse:
     dataset = HouseDataset(session)
     house = dataset.get_house(houseid)
