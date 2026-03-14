@@ -18,6 +18,10 @@ class FakeDataset:
     def __init__(self, *_):
         pass
 
+    @staticmethod
+    def build_data_id(*_):
+        return "test-data-id"
+
     def query(self, **_):
         df = pl.DataFrame(
             {
@@ -42,6 +46,9 @@ class FakeCache:
     def check_cache(self, *_):
         return None
 
+    def cache_agg(self, *_):
+        return None
+
 
 @pytest.fixture(autouse=True)
 def patch_dependencies(monkeypatch):
@@ -59,41 +66,41 @@ END = datetime(2005, 1, 1)
 
 
 def test_mean_house_price_task():
-    result = mean_house_price(AREA, AREA_TYPE, START, END)
+    result = mean_house_price(AREA, AREA_TYPE, START, END, session=None)
     assert isinstance(result, dict)
     print(result)
 
 
 def test_sale_volume_task():
-    result = sale_volume(AREA, AREA_TYPE, START, END)
+    result = sale_volume(AREA, AREA_TYPE, START, END, session=None)
     assert isinstance(result, dict)
 
 
 def test_count_house_price_task():
-    result = count_house_price(AREA, AREA_TYPE, START, END)
+    result = count_house_price(AREA, AREA_TYPE, START, END, session=None)
     assert isinstance(result, dict)
 
 
 def test_count_house_types_task():
-    result = count_house_types(AREA, AREA_TYPE, START, END)
+    result = count_house_types(AREA, AREA_TYPE, START, END, session=None)
     assert isinstance(result, dict)
 
 
 def test_most_expensive_sale_task():
-    result = most_expensive_sale(AREA, AREA_TYPE, START, END)
+    result = most_expensive_sale(AREA, AREA_TYPE, START, END, session=None)
     assert isinstance(result, dict)
 
 
 def test_pct_change_house_price_task():
-    result = pct_change_house_price(AREA, AREA_TYPE, START, END)
+    result = pct_change_house_price(AREA, AREA_TYPE, START, END, session=None)
     assert isinstance(result, dict)
 
 
 def test_standard_dev_house_price_task():
-    result = standard_dev_house_price(AREA, AREA_TYPE, START, END)
+    result = standard_dev_house_price(AREA, AREA_TYPE, START, END, session=None)
     assert isinstance(result, dict)
 
 
 def test_average_house_tenancy_task():
-    result = average_house_tenancy(AREA, AREA_TYPE, START, END)
+    result = average_house_tenancy(AREA, AREA_TYPE, START, END, session=None)
     assert isinstance(result, dict)
