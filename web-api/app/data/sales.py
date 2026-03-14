@@ -6,6 +6,10 @@ from app.data.base import BaseDataset
 class SalesDataset(BaseDataset):
     VALID_AREA_TYPES = {"area", "district", "county", "town", "sector", "outcode", "postcode"}
 
+    @staticmethod
+    def build_data_id(area_type: str, area: str, start_date: datetime, end_date: datetime) -> str:
+        return f"{area_type}_{area}:{start_date}-{end_date}".upper().replace(" ", "")
+
     def _gen_query(self, area_type: str, area: str,
                    start_date: datetime, end_date: datetime):
 
@@ -39,6 +43,6 @@ class SalesDataset(BaseDataset):
         sql, params = self._gen_query(area_type, area, start_date, end_date)
 
         df = self.run_query(sql, params)
-        data_id = f"{area_type}_{area}:{start_date}-{end_date}".upper().replace(" ", "")
+        data_id = self.build_data_id(area_type, area, start_date, end_date)
 
         return df, data_id
