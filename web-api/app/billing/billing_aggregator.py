@@ -5,7 +5,7 @@ from typing import List
 from sqlalchemy import ScalarResult, func
 from sqlmodel import Session, select, update
 
-from app.config import Settings
+from app.settings import Settings
 from app.models.auth import User
 from app.models.billing import Usage, BillingLedger, AggregationEvent
 from app.billing.stripe_adapter import StripePaymentAdapter

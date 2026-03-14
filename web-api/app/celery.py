@@ -1,12 +1,14 @@
 from celery import Celery
 from celery.schedules import crontab
 
-from app.config import Settings
+from app.settings import get_settings
+
+settings = get_settings()
 
 celery_worker = Celery(
     "app",
-    broker=Settings.CELERY_BROKER_URL,
-    result_backend=Settings.CELERY_RESULT_BACKEND,
+    broker=settings.celery_broker_url,
+    backend=settings.celery_backend_results,
 )
 celery_worker.conf.timezone = "UTC"
 

@@ -4,8 +4,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.auth.api_tokens import ApiTokenAuth
-from app.auth.native_auth_adapter import NativeAuthAdapter
-from app.config import get_settings, Settings
+from app.auth.native_auth_adapter import NativeAuth
+from app.settings import get_settings, Settings
 from app.db import get_session
 from app.models.auth import User
 
@@ -39,7 +39,7 @@ def get_current_user(
             pass
 
     # Normal JWT auth
-    auth_adapter = NativeAuthAdapter(session, settings.secret_key, settings.jwt_algorithm)
+    auth_adapter = NativeAuth(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
         payload = auth_adapter.verify_jwt(credentials.credentials)

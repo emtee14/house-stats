@@ -15,9 +15,9 @@ from app.routes.schemas.auth import (
     RevokeApiTokenRequest,
     RevokeApiTokenResponse,
 )
-from app.auth.native_auth_adapter import NativeAuthAdapter
+from app.auth.native_auth_adapter import NativeAuth
 from app.billing.stripe_adapter import StripePaymentAdapter
-from app.config import Settings, get_settings
+from app.settings import Settings, get_settings
 
 router = APIRouter(tags=["Authentication"])
 
@@ -46,7 +46,7 @@ def register_user(
         session: Session = Depends(get_session),
         settings: Settings = Depends(get_settings)
 ) -> RegisterUserResponse:
-    auth_adapter = NativeAuthAdapter(session, settings.secret_key, settings.jwt_algorithm)
+    auth_adapter = NativeAuth(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
         validate_email(request.email, check_deliverability=False)
@@ -92,7 +92,7 @@ def login_user(
         session: Session = Depends(get_session),
         settings: Settings = Depends(get_settings)
 ):
-    auth_adapter = NativeAuthAdapter(session, settings.secret_key, settings.jwt_algorithm)
+    auth_adapter = NativeAuth(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
         access_token, refresh_token = auth_adapter.login(
@@ -126,7 +126,7 @@ def refresh_jwt(
     if refresh_token is None:
         raise HTTPException(status_code=400, detail="No refresh token present")
 
-    auth_adapter = NativeAuthAdapter(session, settings.secret_key, settings.jwt_algorithm)
+    auth_adapter = NativeAuth(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
         access_token = auth_adapter.refresh_token(refresh_token)
@@ -149,7 +149,7 @@ def logout_user(
     if refresh_token is None:
         raise HTTPException(status_code=400, detail="No refresh token present")
 
-    auth_adapter = NativeAuthAdapter(session, settings.secret_key, session.join_transaction_mode)
+    auth_adapter = NativeAuth(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
         auth_adapter.revoke_refresh_token(refresh_token)
@@ -186,6 +186,9 @@ def delete_api_token(request: RevokeApiTokenRequest, user: User = Depends(get_cu
                      session : Session = Depends(get_session)) -> RevokeApiTokenResponse:
     api_token_adap = ApiTokenAuth(session)
 
-    api_token_adap.revoke_token(user, request.token)
+    try:
+        api_token_adap.revoke_token(user, request.token)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     return RevokeApiTokenResponse()
