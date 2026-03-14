@@ -94,7 +94,7 @@ def login_user(
         request: LoginRequest, response: Response,
         session: Session = Depends(get_session),
         settings: Settings = Depends(get_settings)
-):
+) -> LoginResponse:
     auth_adapter = NativeAuth(session, settings.secret_key, settings.jwt_algorithm)
 
     try:
@@ -125,7 +125,7 @@ def refresh_jwt(
         refresh_token: str = Cookie(None),
         session: Session = Depends(get_session),
         settings: Settings = Depends(get_settings)
-):
+) -> LoginResponse:
     if refresh_token is None:
         raise HTTPException(status_code=400, detail="No refresh token present")
 
@@ -141,14 +141,16 @@ def refresh_jwt(
 
 @router.post(
     "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Logout user",
-    description="Revokes the refresh token associated with the current session and logs the user out."
+    description="Revokes the refresh token associated with the current session and logs the user out.",
+    response_description="Logout completed successfully.",
 )
 def logout_user(
         refresh_token: str = Cookie(None),
         session: Session = Depends(get_session),
         settings: Settings = Depends(get_settings)
-):
+) -> Response:
     if refresh_token is None:
         raise HTTPException(status_code=400, detail="No refresh token present")
 
@@ -159,7 +161,7 @@ def logout_user(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    return Response(status_code=status.HTTP_200_OK)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ======== Token for MCP and interaction from a system ========
@@ -197,8 +199,16 @@ def delete_api_token(request: RevokeApiTokenRequest, user: User = Depends(get_cu
     return RevokeApiTokenResponse()
 
 
-@router.get("/token/list")
-def list_api_tokens(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+@router.get(
+    "/token/list",
+    response_model=ListApiTokenResponse,
+    summary="List API tokens",
+    description="Returns the API tokens belonging to the authenticated user.",
+)
+def list_api_tokens(
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> ListApiTokenResponse:
     user_tokens = list(user.api_tokens)
     user_tokens = list(map(lambda x: Token(id=x.id, name=x.name,
                                       expiry=str(x.expires_at), revoked=x.revoked),
