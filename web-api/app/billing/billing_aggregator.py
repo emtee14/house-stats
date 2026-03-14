@@ -5,15 +5,16 @@ from typing import List
 from sqlalchemy import ScalarResult, func
 from sqlmodel import Session, select, update
 
-from app.config import Config
+from app.settings import Settings
 from app.models.auth import User
 from app.models.billing import Usage, BillingLedger, AggregationEvent
 from app.billing.stripe_adapter import StripePaymentAdapter
 
 
 class BillingAggregator:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, settings: Settings):
         self._session = session
+        self._settings = settings
 
     def get_users(self, period_end: datetime = datetime.now(UTC)) -> ScalarResult[User]:
         stmt = (
@@ -87,12 +88,11 @@ class BillingAggregator:
         )
         self._session.add(agg_event)
 
-        aggregator = BillingAggregator(self._session)
 
         date_today = datetime.today()
         date_today += timedelta(hours=billing_hour)
 
-        users = aggregator.get_users(period_end=date_today)
+        users = self.get_users(period_end=date_today)
 
         ledger_list = []
         for user in users:
@@ -100,7 +100,7 @@ class BillingAggregator:
             ledger_list.append(ledger_entry)
 
         for ledger in ledger_list:
-            stripe_instance = StripePaymentAdapter(Config.STRIPE_API_TOKEN)
+            stripe_instance = StripePaymentAdapter(self._settings.stripe_api_token)
             user = self._session.get(User, ledger.user_id)
 
             event_id = stripe_instance.log_new_billing_event(
@@ -111,7 +111,7 @@ class BillingAggregator:
 
             ledger.stripe_event_id = event_id
             ledger.aggregation_event_id = agg_event.id
-            aggregator.update_usage_events(ledger)
+            self.update_usage_events(ledger)
 
         run_time = int((datetime.now(UTC) - agg_event.timestamp).total_seconds() * 1000)
         agg_event.run_time = run_time

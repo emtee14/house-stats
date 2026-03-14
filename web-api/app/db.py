@@ -1,13 +1,18 @@
+from functools import lru_cache
+
+from fastapi import Depends
 from sqlmodel import create_engine, Session
-from app.config import Config
+from app.settings import Settings, get_settings
+
+@lru_cache
+def create_engine_from_settings(settings: Settings):
+    return create_engine(settings.database_url)
 
 
-
-engine = create_engine(
-    Config.DATABASE_URL,
-)
+def get_engine(settings: Settings = Depends(get_settings)):
+    return create_engine(settings.database_url)
 
 
-def get_session():
+def get_session(engine = Depends(get_engine)):
     with Session(engine) as session:
         yield session

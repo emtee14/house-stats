@@ -5,11 +5,11 @@ import pytest
 
 from app.billing.billing_aggregator import BillingAggregator
 from app.billing.stripe_adapter import StripePaymentAdapter
-from tests.common import db_session, engine, config
+from tests.common import *
 from tests.auth.common import create_user
 from tests.billing.common import create_usage
 
-def test_get_users(db_session, create_user, create_usage):
+def test_get_users(db_session, create_user, create_usage, settings):
     user = create_user(
         email="test@example.com",
         first_name="John",
@@ -17,7 +17,7 @@ def test_get_users(db_session, create_user, create_usage):
         password="Password123",
     )
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     user_list = biller.get_users().all()
 
@@ -37,7 +37,7 @@ def test_get_users(db_session, create_user, create_usage):
     assert user in user_list_after
 
 
-def test_get_users_in_period(db_session, create_user, create_usage):
+def test_get_users_in_period(db_session, create_user, create_usage, settings):
     user = create_user(
         email="test@example.com",
         first_name="John",
@@ -45,7 +45,7 @@ def test_get_users_in_period(db_session, create_user, create_usage):
         password="Password123",
     )
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     timestamp = datetime.now(UTC) - timedelta(minutes=1)
     create_usage(user=user, api_route="/users/", tokens=50, timestamp=timestamp)
@@ -62,7 +62,7 @@ def test_get_users_in_period(db_session, create_user, create_usage):
     assert user in user_list
 
 
-def test_aggregate_no_items(db_session, create_user, create_usage):
+def test_aggregate_no_items(db_session, create_user, create_usage, settings):
     user = create_user(
         email="test@example.com",
         first_name="John",
@@ -70,7 +70,7 @@ def test_aggregate_no_items(db_session, create_user, create_usage):
         password="Password123",
     )
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     with pytest.raises(ValueError) as e:
         _ = biller.aggregate_user_billing(user, datetime.now(UTC))
@@ -78,7 +78,7 @@ def test_aggregate_no_items(db_session, create_user, create_usage):
     assert str(e.value) == "User has no usage recorded"
 
 
-def test_aggregate_with_items(db_session, create_user, create_usage):
+def test_aggregate_with_items(db_session, create_user, create_usage, settings):
     user = create_user(
         email="test@example.com",
         first_name="John",
@@ -86,7 +86,7 @@ def test_aggregate_with_items(db_session, create_user, create_usage):
         password="Password123",
     )
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     bills = [50, 100, 150, 200]
 
@@ -121,7 +121,7 @@ def test_aggregate_with_items(db_session, create_user, create_usage):
     assert ledger.total_tokens == sum(bills)
 
 
-def test_aggregate_items_in_window(db_session, create_user, create_usage):
+def test_aggregate_items_in_window(db_session, create_user, create_usage, settings):
     user = create_user(
         email="test@example.com",
         first_name="John",
@@ -129,7 +129,7 @@ def test_aggregate_items_in_window(db_session, create_user, create_usage):
         password="Password123",
     )
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     current_time = datetime.now(UTC)
 
@@ -166,7 +166,7 @@ def test_aggregate_items_in_window(db_session, create_user, create_usage):
     assert ledger.total_tokens == sum(bills) - bills[-1]
 
 
-def test_aggregate_two_ledgers(db_session, create_user, create_usage):
+def test_aggregate_two_ledgers(db_session, create_user, create_usage, settings):
     user = create_user(
         email="test@example.com",
         first_name="John",
@@ -174,7 +174,7 @@ def test_aggregate_two_ledgers(db_session, create_user, create_usage):
         password="Password123",
     )
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     current_time = datetime.now(UTC)
 
@@ -244,7 +244,7 @@ def test_aggregate_two_ledgers(db_session, create_user, create_usage):
     assert ledger_2.total_tokens == sum(bills_2)
 
 
-def test_aggregate_two_ledgers_one_empty(db_session, create_user, create_usage):
+def test_aggregate_two_ledgers_one_empty(db_session, create_user, create_usage, settings):
     user = create_user(
         email="test@example.com",
         first_name="John",
@@ -252,7 +252,7 @@ def test_aggregate_two_ledgers_one_empty(db_session, create_user, create_usage):
         password="Password123",
     )
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     current_time = datetime.now(UTC)
 
@@ -296,7 +296,7 @@ def test_aggregate_two_ledgers_one_empty(db_session, create_user, create_usage):
 
 
 def test_aggregation_en_masse_single_user(
-    create_user, create_usage, db_session, config
+    create_user, create_usage, db_session, settings
 ):
     user = create_user(
         email="test@example.com",
@@ -305,7 +305,7 @@ def test_aggregation_en_masse_single_user(
         password="Password123",
     )
 
-    stripe_adap = StripePaymentAdapter(config.STRIPE_API_TOKEN)
+    stripe_adap = StripePaymentAdapter(settings.stripe_api_token)
     stripe_adap.setup_user(user, db_session)
 
     bills = [50, 100, 150, 200]
@@ -337,7 +337,7 @@ def test_aggregation_en_masse_single_user(
         ),
     ]
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     agg_event = biller.aggregate_en_masse(billing_hour=datetime.now(UTC).hour + 1)
 
@@ -349,7 +349,7 @@ def test_aggregation_en_masse_single_user(
 
 
 def test_aggregation_en_masse_multi_user(
-    create_user, create_usage, db_session, config, seed="kjfnkjanfkjwnfkwaj"
+    create_user, create_usage, db_session, settings, seed="kjfnkjanfkjwnfkwaj"
 ):
     user_1 = create_user(
         email="test@example.com",
@@ -370,16 +370,16 @@ def test_aggregation_en_masse_multi_user(
         password="Password123",
     )
 
-    stripe_adap = StripePaymentAdapter(config.STRIPE_API_TOKEN)
+    stripe_adap = StripePaymentAdapter(settings.stripe_api_token)
     stripe_adap.setup_user(user_1, db_session)
     stripe_adap.setup_user(user_2, db_session)
     stripe_adap.setup_user(user_3, db_session)
 
     random.seed(seed)
 
-    bills_1 = [random.randint(0, 500) for i in range(50)]
-    bills_2 = [random.randint(0, 500) for i in range(50)]
-    bills_3 = [random.randint(0, 500) for i in range(50)]
+    bills_1 = [random.randint(0, 500) for _ in range(50)]
+    bills_2 = [random.randint(0, 500) for _ in range(50)]
+    bills_3 = [random.randint(0, 500) for _ in range(50)]
 
     usages_1 = []
     usages_2 = []
@@ -415,7 +415,7 @@ def test_aggregation_en_masse_multi_user(
             )
         )
 
-    biller = BillingAggregator(db_session)
+    biller = BillingAggregator(db_session, settings)
 
     agg_event = biller.aggregate_en_masse(billing_hour=datetime.now(UTC).hour + 1)
 
