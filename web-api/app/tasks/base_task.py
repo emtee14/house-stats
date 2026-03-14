@@ -1,5 +1,8 @@
 from celery import Task
-from app.db import get_session
+from sqlmodel import Session
+
+from app.db import create_engine_from_settings
+from app.settings import get_settings
 
 
 class DatabaseTask(Task):
@@ -10,5 +13,7 @@ class DatabaseTask(Task):
             # Testing case — don't override
             return self.run(*args, **kwargs)
 
-        self._session = get_session()
-        return self.run(*args, session=self._session, **kwargs)
+        engine = create_engine_from_settings(get_settings())
+        with Session(engine) as session:
+            self._session = session
+            return self.run(*args, session=session, **kwargs)
