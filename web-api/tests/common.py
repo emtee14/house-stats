@@ -11,6 +11,9 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.settings import Settings, get_settings
 from app.db import get_session
+from app.models import auth as _auth_models  # noqa: F401
+from app.models import billing as _billing_models  # noqa: F401
+from app.models import housing_data as _housing_data_models  # noqa: F401
 
 
 class FakeData:
@@ -21,7 +24,7 @@ class FakeData:
 
 @pytest.fixture(scope="session")
 def postgres_container():
-    container = PostgresContainer("postgres:16")
+    container = PostgresContainer("postgres:16", driver="psycopg")
     container.start()
     db_url = container.get_connection_url()
 
@@ -58,7 +61,7 @@ def settings(postgres_container, redis_url) -> Settings:
 
     return Settings(
         database_url=postgres_container.get_connection_url(),
-        celery_backend_results=redis_url,
+        celery_result_backend=redis_url,
         celery_broker_url=redis_url,
         secret_key=os.environ.get("SECRET_KEY"),
         jwt_algorithm=os.environ.get("JWT_ALGORITHM"),
@@ -74,6 +77,7 @@ def engine(postgres_container) -> Engine:
     with engine.connect() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS auth"))
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS billing"))
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS housing_data"))
         conn.commit()
 
     SQLModel.metadata.create_all(engine)
