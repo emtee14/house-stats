@@ -8,7 +8,7 @@ settings = get_settings()
 celery_worker = Celery(
     "app",
     broker=settings.celery_broker_url,
-    backend=settings.celery_backend_results,
+    backend=settings.celery_result_backend,
 )
 celery_worker.conf.timezone = "UTC"
 
@@ -21,4 +21,5 @@ celery_worker.conf.beat_schedule = {
 }
 
 
-# celery_worker.autodiscover_tasks(["app.tasks"])
+from app.tasks import billing #noqa: F403
+from app.tasks import stats #noqa: F403
