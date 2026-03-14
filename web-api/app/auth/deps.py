@@ -11,11 +11,12 @@ from app.models.auth import User
 
 security = HTTPBearer(auto_error=False)
 
-def get_current_user(
-        protected: bool = True,
-        credentials: HTTPAuthorizationCredentials | None = Depends(security),
-        session: Session = Depends(get_session),
-        settings: Settings = Depends(get_settings)
+
+def _get_current_user(
+        allow_api_token: bool,
+        credentials: HTTPAuthorizationCredentials | None,
+        session: Session,
+        settings: Settings,
 ) -> User:
     if credentials is None:
         raise HTTPException(
@@ -23,13 +24,12 @@ def get_current_user(
             detail="Missing authentication credentials",
         )
 
-    # Allow api token auth if route is not a protected one
-    if not protected:
+    if allow_api_token:
         try:
             token_adap = ApiTokenAuth(session)
-            user = token_adap.verify_token(credentials.credentials)
-            if user is not None:
-                return user
+            api_token = token_adap.verify_token(credentials.credentials)
+            if api_token is not None:
+                return api_token.user
             else:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -58,3 +58,29 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found for provided token",
         )
+
+
+def get_current_user(
+        credentials: HTTPAuthorizationCredentials | None = Depends(security),
+        session: Session = Depends(get_session),
+        settings: Settings = Depends(get_settings)
+) -> User:
+    return _get_current_user(
+        allow_api_token=False,
+        credentials=credentials,
+        session=session,
+        settings=settings,
+    )
+
+
+def get_current_user_with_api_token(
+        credentials: HTTPAuthorizationCredentials | None = Depends(security),
+        session: Session = Depends(get_session),
+        settings: Settings = Depends(get_settings)
+) -> User:
+    return _get_current_user(
+        allow_api_token=True,
+        credentials=credentials,
+        session=session,
+        settings=settings,
+    )
