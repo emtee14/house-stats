@@ -1,7 +1,7 @@
 import pytest
 
 from app.models.billing import Usage
-from tests.common import db_session, engine, config
+from tests.common import db_session, engine, settings
 
 
 @pytest.fixture

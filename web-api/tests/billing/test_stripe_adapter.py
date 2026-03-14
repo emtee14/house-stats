@@ -3,11 +3,11 @@ import pytest
 import stripe
 
 from app.billing.stripe_adapter import StripePaymentAdapter
-from tests.common import config
+from tests.common import *
 
-def test_initial_login(config):
+def test_initial_login(settings):
     try:
-        stripe_adap = StripePaymentAdapter(config.STRIPE_API_TOKEN)
+        stripe_adap = StripePaymentAdapter(settings.stripe_api_token)
     except stripe.error.AuthenticationError:
         pytest.fail("Authentication Error")
 
