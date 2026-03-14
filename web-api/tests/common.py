@@ -9,7 +9,8 @@ from testcontainers.postgres import PostgresContainer
 from testcontainers.redis import RedisContainer
 from fastapi.testclient import TestClient
 from app.main import create_app
-from app.config import Settings, get_settings
+from app.settings import Settings, get_settings
+from app.db import get_session
 
 
 class FakeData:
@@ -44,12 +45,8 @@ def redis_container():
 
     container.stop()
 
-
 @pytest.fixture
 def redis_url(redis_container) -> str:
-    """
-    Returns the Redis connection URL for tests.
-    """
     host = redis_container.get_container_host_ip()
     port = redis_container.get_exposed_port(6379)
     return f"redis://{host}:{port}/0"
@@ -57,7 +54,7 @@ def redis_url(redis_container) -> str:
 @pytest.fixture
 def settings(postgres_container, redis_url) -> Settings:
 
-    load_dotenv(".env.test")
+    load_dotenv("./.env.test")
 
     return Settings(
         database_url=postgres_container.get_connection_url(),
@@ -97,14 +94,19 @@ def db_session(engine) -> Generator[Session]:
     connection.close()
 
 @pytest.fixture
-def client(settings):
+def client(settings, db_session):
     def override_settings():
         return settings
+
+    def override_get_session():
+        yield db_session
+
     app = create_app()
 
     app.dependency_overrides[get_settings] = override_settings
+    app.dependency_overrides[get_session] = override_get_session
 
-    with TestClient(app) as client:
+    with TestClient(app, base_url="https://testserver") as client:
         yield client
 
     app.dependency_overrides.clear()
