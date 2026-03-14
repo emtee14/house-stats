@@ -21,7 +21,9 @@ class Statistic(ABC):
 
     async def compute(self, data: Tuple[pl.DataFrame, str]):
         result = self._cache.check_cache(self.name, data[1])
-        if result:
+        if result is not None:
             return result
-        else:
-            return await self._compute(data[0])
+
+        result = await self._compute(data[0])
+        self._cache.cache_agg(self.name, data[1], result)
+        return result
