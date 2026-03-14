@@ -5,7 +5,7 @@ services:
     container_name: house_stats_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: house
+      POSTGRES_USER: sales
       POSTGRES_PASSWORD: househousehouse
       POSTGRES_DB: house_stats
     ports:
@@ -26,7 +26,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+psycopg://house:househousehouse@postgres:5432/house_stats
+      DATABASE_URL: postgresql+psycopg://sales:househousehouse@postgres:5432/house_stats
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
     depends_on:
@@ -39,7 +39,7 @@ services:
     command: >
       uv run celery -A app.celery:celery_worker worker --loglevel=info
     environment:
-      DATABASE_URL: postgresql+psycopg://house:househousehouse@postgres:5432/house_stats
+      DATABASE_URL: postgresql+psycopg://sales:househousehouse@postgres:5432/house_stats
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
     depends_on:

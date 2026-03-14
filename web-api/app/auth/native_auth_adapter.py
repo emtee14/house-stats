@@ -7,17 +7,16 @@ import jwt
 from dateutil.tz import UTC
 from sqlmodel import Session, select
 
-from app.auth.base import AuthBase
 from app.models.auth import User, RefreshToken
 
 
-class NativeAuthAdapter(AuthBase):
+class NativeAuth:
     def __init__(
         self, session: Session, secret_key: str, algorithm: str = "HS256"
     ) -> None:
         self._session = session
         self._secret_key = secret_key
-        self._algorithm = algorithm
+        self._algorithm = "HS256"
 
     def get_user_by_email(self, email: str) -> User | None:
         stmt = select(User).where(User.email == email).limit(1)
@@ -36,7 +35,8 @@ class NativeAuthAdapter(AuthBase):
             raise ValueError("User with that email address already exists.")
 
         self._session.add(user)
-        self._session.commit()
+        self._session.flush()
+        self._session.refresh(user)
 
         return user
 
@@ -61,7 +61,8 @@ class NativeAuthAdapter(AuthBase):
         )
         token_record.set_token_hash(token)
         self._session.add(token_record)
-        self._session.commit()
+        self._session.flush()
+        self._session.refresh(token_record)
 
         return token
 
@@ -85,7 +86,7 @@ class NativeAuthAdapter(AuthBase):
         refr_token = self._verify_refresh_token(token)
         if (
             refr_token is not None
-            and refr_token.expires_at < datetime.now(UTC).now()
+            and refr_token.expires_at > datetime.now(UTC)
             and refr_token.revoked is False
         ):
             new_jwt = self._create_jwt_token(refr_token.user)
@@ -97,13 +98,14 @@ class NativeAuthAdapter(AuthBase):
         refr_token = self._verify_refresh_token(token)
         if refr_token is not None:
             refr_token.revoke_token()
-            self._session.commit()
+            self._session.flush()
+            self._session.refresh(refr_token)
             return token
         else:
             raise ValueError("Incorrect refresh token.")
 
-    def login(self, username: str, password: str) -> Tuple[str, str]:
-        user = self.get_user_by_email(username)
+    def login(self, email: str, password: str) -> Tuple[str, str]:
+        user = self.get_user_by_email(email)
 
         if user is None:
             raise ValueError("Incorrect email or password.")
@@ -115,11 +117,3 @@ class NativeAuthAdapter(AuthBase):
         refresh_token = self._create_refresh_token(user)
 
         return token, refresh_token
-
-    def logout(self, refresh_token: str) -> None:
-        # TODO implement token binning
-        pass
-
-    def delete_user(self, user: User) -> None:
-        # TODO add user deletion
-        pass

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-beat
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-beat
+  template:
+    metadata:
+      labels:
+        app: celery-beat
+    spec:
+      containers:
+        - name: beat
+          image: ghcr.io/emtee14/house-stats-web-api:latest
+          imagePullPolicy: Always
+          command: ["uv"]
+          args:
+            [
+              "run",
+              "celery",
+              "-A",
+              "app.celery:celery_worker",
+              "beat",
+              "--loglevel=info"
+            ]
+      imagePullSecrets:
+        - name: ghcr-secret
