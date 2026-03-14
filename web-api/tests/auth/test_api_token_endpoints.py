@@ -38,6 +38,7 @@ def test_create_api_token_e2e(client: TestClient, db_session, settings):
 
     # Create API token
     resp_create = client.post("/auth/token/create",
+                              json={"name": "test-token", "expiry": 30},
                               headers={"Authorization": f"Bearer {resp_login.json()['access_token']}"}
                               )
 
@@ -92,6 +93,7 @@ def test_revoke_api_token_e2e(client: TestClient, db_session, settings):
 
     # Create API token
     resp_create = client.post("/auth/token/create",
+                              json={"name": "test-token", "expiry": 30},
                               headers={"Authorization": f"Bearer {resp_login.json()['access_token']}"}
                               )
     assert resp_create.status_code == 200
@@ -99,7 +101,7 @@ def test_revoke_api_token_e2e(client: TestClient, db_session, settings):
 
     # Revoke API token
     resp_revoke = client.post("/auth/token/delete",
-                              json={"token": token_str},
+                              json={"token_id": token_str.split(".")[0]},
                               headers={"Authorization": f"Bearer {resp_login.json()['access_token']}"}
                               )
 
@@ -147,7 +149,7 @@ def test_revoke_invalid_api_token_e2e(client: TestClient, db_session, settings):
 
     # Try to revoke invalid token
     resp_revoke = client.post("/auth/token/delete",
-                              json={"token": "invalid.token.string"},
+                              json={"token_id": "invalid-token-id"},
                               headers={"Authorization": f"Bearer {resp_login.json()['access_token']}"}
                               )
 

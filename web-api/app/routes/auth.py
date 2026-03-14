@@ -14,6 +14,9 @@ from app.routes.schemas.auth import (
     CreateApiTokenResponse,
     RevokeApiTokenRequest,
     RevokeApiTokenResponse,
+    CreateApiTokenRequest,
+    ListApiTokenResponse,
+    Token,
 )
 from app.auth.native_auth_adapter import NativeAuth
 from app.billing.stripe_adapter import StripePaymentAdapter
@@ -166,12 +169,12 @@ def logout_user(
     summary="Create API token",
     description="Generates a new API token for the authenticated user for programmatic access (e.g., MCP integrations)."
 )
-def create_api_token(user: User = Depends(get_current_user),
+def create_api_token(request: CreateApiTokenRequest, user: User = Depends(get_current_user),
                      session : Session = Depends(get_session)) -> CreateApiTokenResponse:
     api_token_adap = ApiTokenAuth(session)
 
 
-    token_str, token_record = api_token_adap.create_token(user)
+    token_str, token_record = api_token_adap.create_token(user, request.name, expiry_days=request.expiry)
 
     return CreateApiTokenResponse(token=token_str, expiry=token_record.expires_at.strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -187,8 +190,18 @@ def delete_api_token(request: RevokeApiTokenRequest, user: User = Depends(get_cu
     api_token_adap = ApiTokenAuth(session)
 
     try:
-        api_token_adap.revoke_token(user, request.token)
+        api_token_adap.revoke_token(user, request.token_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return RevokeApiTokenResponse()
+
+
+@router.get("/token/list")
+def list_api_tokens(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    user_tokens = list(user.api_tokens)
+    user_tokens = list(map(lambda x: Token(id=x.id, name=x.name,
+                                      expiry=str(x.expires_at), revoked=x.revoked),
+                      user_tokens))
+
+    return ListApiTokenResponse(tokens=user_tokens)

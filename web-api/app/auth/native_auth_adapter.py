@@ -16,7 +16,7 @@ class NativeAuth:
     ) -> None:
         self._session = session
         self._secret_key = secret_key
-        self._algorithm = "HS256"
+        self._algorithm = algorithm
 
     def get_user_by_email(self, email: str) -> User | None:
         stmt = select(User).where(User.email == email).limit(1)
@@ -71,7 +71,7 @@ class NativeAuth:
             payload = jwt.decode(token, self._secret_key, algorithms=[self._algorithm])
             return payload
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
-            raise e  # ValueError("Signature invalid or expired")
+            raise ValueError("Signature invalid or expired") from e
 
     def _verify_refresh_token(self, token: str) -> RefreshToken | None:
         token_hash = sha256(token.encode()).digest()

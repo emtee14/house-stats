@@ -13,7 +13,7 @@ def test_new_token(db_session, create_user):
 
     token_adap = ApiTokenAuth(db_session)
 
-    token_str, token_record = token_adap.create_token(user)
+    token_str, token_record = token_adap.create_token(user, "test-token")
 
     assert token_str is not None
     assert token_record is not None
@@ -26,11 +26,11 @@ def test_revoke_token(db_session, create_user):
 
     token_adap = ApiTokenAuth(db_session)
 
-    token_str, token_record = token_adap.create_token(user)
+    token_str, token_record = token_adap.create_token(user,"test-token")
 
     assert token_record.revoked is False
 
-    token_adap.revoke_token(user, token_str)
+    token_adap.revoke_token(user, token_str.split(".")[0])
     assert token_record.revoked is True
 
 def test_revoke_revoked_token(db_session, create_user):
@@ -38,23 +38,23 @@ def test_revoke_revoked_token(db_session, create_user):
 
     token_adap = ApiTokenAuth(db_session)
 
-    token_str, token_record = token_adap.create_token(user)
+    token_str, token_record = token_adap.create_token(user,"test-token")
 
     assert token_record.revoked is False
-    token_adap.revoke_token(user, token_str)
+    token_adap.revoke_token(user, token_str.split(".")[0])
 
-    with pytest.raises(ValueError, match="Token is revoked"):
-        token_adap.revoke_token(user, token_str)
+    with pytest.raises(ValueError, match="Token already revoked"):
+        token_adap.revoke_token(user, token_str.split(".")[0])
 
 def test_revoke_invalid_token(db_session, create_user):
     user = create_user("test@example.com", "test", "user", "test-password")
 
     token_adap = ApiTokenAuth(db_session)
 
-    token_str, token_record = token_adap.create_token(user)
+    token_str, token_record = token_adap.create_token(user,"test-token")
 
     assert token_record.revoked is False
-    with pytest.raises(ValueError, match="Invalid token"):
+    with pytest.raises(ValueError, match="Unable to find token"):
         token_adap.revoke_token(user, "gobbledy-gook")
 
 def test_verify_valid_token(db_session, create_user):
@@ -62,7 +62,7 @@ def test_verify_valid_token(db_session, create_user):
 
     token_adap = ApiTokenAuth(db_session)
 
-    token_str, token_record = token_adap.create_token(user)
+    token_str, token_record = token_adap.create_token(user,"test-token")
 
     api_token = token_adap.verify_token(token_str)
 
@@ -74,7 +74,8 @@ def test_verify_expired_token(db_session, create_user):
 
     token_adap = ApiTokenAuth(db_session)
 
-    token_str, token_record = token_adap.create_token(user, expiry=timedelta(milliseconds=1))
+    token_str, token_record = token_adap.create_token(user, "test-token", expiry_days=-1)
+
     time.sleep(0.1)
 
     with pytest.raises(ValueError, match="Token expired"):
@@ -92,7 +93,7 @@ def test_verify_no_existing_token(db_session, create_user):
     user = create_user("test@example.com", "test", "user", "test-password")
 
     token_adap = ApiTokenAuth(db_session)
-    token_str, token_record = token_adap.create_token(user)
+    token_str, token_record = token_adap.create_token(user,"test-token")
     db_session.delete(token_record)
 
     with pytest.raises(ValueError, match="Unable to find token"):
@@ -102,7 +103,7 @@ def test_verify_invalid_hash(db_session, create_user):
     user = create_user("test@example.com", "test", "user", "test-password")
 
     token_adap = ApiTokenAuth(db_session)
-    token_str, token_record = token_adap.create_token(user)
+    token_str, token_record = token_adap.create_token(user,"test-token")
 
     token_str = secrets.token_urlsafe(32)
 
@@ -115,7 +116,7 @@ def test_verify_revoked_token(db_session, create_user):
     user = create_user("test@example.com", "test", "user", "test-password")
 
     token_adap = ApiTokenAuth(db_session)
-    token_str, token_record = token_adap.create_token(user)
+    token_str, token_record = token_adap.create_token(user,"test-token")
     token_record.revoked = True
 
     with pytest.raises(ValueError, match="Token is revoked"):

@@ -15,7 +15,7 @@ class ApiTokenAuth():
         self._session = session
         self._re_pattern = re.compile(r'^[A-Za-z0-9_-]{11}\.[A-Za-z0-9_-]{43}$')
 
-    def create_token(self, user: User, expiry: timedelta = timedelta(weeks=12)) -> Tuple[str, ApiToken]:
+    def create_token(self, user: User, name: str, expiry_days: int = 30) -> Tuple[str, ApiToken]:
         issued_at = datetime.now(UTC)
 
         for _ in range(5):
@@ -26,9 +26,10 @@ class ApiTokenAuth():
             token_record = ApiToken(
                 id = key_id,
                 user_id = user.id,
+                name = name,
                 token_hash = hashed_token,
                 issued_at = issued_at,
-                expires_at = issued_at + expiry,
+                expires_at = issued_at + timedelta(days=expiry_days),
             )
             try:
                 self._session.add(token_record)
@@ -69,11 +70,14 @@ class ApiTokenAuth():
 
         return token_record
 
-    def revoke_token(self, user: User, token_str: str) -> None:
-        token_record = self.verify_token(token_str)
+    def revoke_token(self, user: User, token_id: str) -> None:
+        stmt = select(ApiToken).where(
+            (ApiToken.id == token_id) & (ApiToken.user_id == user.id)
+        ).limit(1)
+        token_record = self._session.exec(stmt).one_or_none()
 
-        if token_record.user_id != user.id:
-            raise ValueError("Token does not belong to user")
+        if token_record is None:
+            raise ValueError("Unable to find token")
 
         if token_record.revoked is True:
             raise ValueError("Token already revoked")

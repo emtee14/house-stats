@@ -69,7 +69,11 @@ class ApiToken(SQLModel, table=True):
     __table_args__ = {"schema": "auth"}
     id: str = Field(primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="auth.users.id")
+
+    name: str = Field()
+
     token_hash: bytes = Field()
+
     issued_at: datetime = Field(default_factory=lambda : datetime.now(UTC),
                                      sa_column=Column(DateTime(timezone=True), nullable=False))
     expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
