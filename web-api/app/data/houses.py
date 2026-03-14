@@ -1,7 +1,6 @@
-
 from sqlmodel import Session, select
 
-from app.models.housing_data import EpcCertificate, House, Sale
+from app.models.housing_data import EpcCertificate, House, Sale, UPRNLookup
 
 
 class HouseDataset:
@@ -31,6 +30,12 @@ class HouseDataset:
         return list(self.session.exec(statement))
 
     def get_linked_epcs(self, house: House) -> list[EpcCertificate]:
-        uprn = house.uprn_lookup.uprn
+        lookup = self.session.exec(
+            select(UPRNLookup).where(UPRNLookup.houseid == house.houseid)
+        ).first()
+        if lookup is None:
+            return []
+
+        uprn = lookup.uprn
         statement = select(EpcCertificate).where(EpcCertificate.uprn == uprn)
         return list(self.session.exec(statement))

@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 
 from fastapi.testclient import TestClient
 
-from app.models.housing_data import EpcCertificate, House, Postcode, Sale
+from app.models.housing_data import EpcCertificate, House, Postcode, Sale, UPRNLookup
 from tests.auth.common import create_user, login_user
 from tests.common import *
 
@@ -40,11 +40,11 @@ def test_get_houses_by_postcode_returns_houseids(
     db_session.flush()
     db_session.commit()
 
-    response = client.get("/houses/postcode/LS11AA", headers=headers)
+    response = client.get("/houses/postcode/LS1 1AA", headers=headers)
 
     assert response.status_code == 200
     assert response.json() == {
-        "postcode": "LS11AA",
+        "postcode": "LS1 1AA",
         "houses": [
             {
                 "houseid": "house-1",
@@ -86,6 +86,7 @@ def test_get_house_details_returns_sales_and_linked_epcs(
         )
     )
     db_session.flush()
+    db_session.add(UPRNLookup(houseid="house-1", uprn=123456789))
     db_session.add(
         Sale(
             tui="sale-2",
@@ -139,6 +140,7 @@ def test_get_house_details_returns_sales_and_linked_epcs(
         "houseid": "house-1",
         "paon": "10",
         "saon": "Flat 2",
+        "street": None,
         "postcode": "LS1 1AA",
         "type": "F",
         "previous_sales": [
