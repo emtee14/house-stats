@@ -21,6 +21,14 @@ class FakeData:
         self.sales = sales
 
 
+@pytest.fixture(autouse=True)
+def stub_billing_task_delay(monkeypatch):
+    monkeypatch.setattr(
+        "app.billing.deps.t_log_token_usage.delay",
+        lambda *args, **kwargs: None,
+    )
+
+
 
 @pytest.fixture(scope="session")
 def postgres_container():

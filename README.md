@@ -88,7 +88,7 @@ The platform is composed of several services working together:
 Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/house-stats-api.git
+git clone https://github.com/emtee14/house-stats-api.git
 cd house-stats-api
 ```
 
@@ -152,14 +152,22 @@ Typical deployment architecture:
 - PostgreSQL database
 - Ingress or Cloudflare Tunnel for external access
 
-Swith to k8s directory Services
+Switch to k8s directory Services
 ```bash
 cd k8s
 ```
 
-Apply secrets
+Apply secrets and cloudflare config, this assumes you have confiugured the tunnel on cloudflare and put the config files in k8s/cf-tunnel
 ```bash
 kubectl apply -f secrets.yaml
+```
+```bash
+cd cf-tunnel
+kubectl create secret generic cloudflared-secret \                
+  --from-file=config.yaml \
+  --from-file=tunnel-creds.json \
+  --from-file=cert.pem
+cd ..
 ```
 
 Create persistant storages
