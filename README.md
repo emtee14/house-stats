@@ -5,6 +5,8 @@
 [![Publish Web API container](https://github.com/emtee14/house-stats/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/emtee14/house-stats/actions/workflows/docker-publish.yml)
 ## Overview
 
+[API HERE](https://api.housestats.co.uk)
+
 House Stats API is a data-driven web service that provides statistical insights into the UK housing market. The API aggregates data from the UK Land Registry Price Paid Dataset and Energy Performance Certificates (EPC) to enable querying, analysis, and statistical summaries of property transactions.
 
 The system exposes RESTful endpoints that allow users to retrieve property sales statistics, aggregated metrics, and other housing insights derived from these datasets.
