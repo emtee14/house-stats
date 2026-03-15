@@ -38,7 +38,7 @@ def get_supported_sales_stats(
 def create_sales_stats_task(
     request: StatsTaskRequest,
     user: User = Depends(get_current_user_with_api_token),
-    _ = Depends(lambda: bill_tokens(5))
+    _ = Depends(bill_tokens(5))
 ) -> StatsTaskCreatedResponse:
     unsupported = sorted(set(request.stats) - set(SUPPORTED_SALES_STATS))
     if unsupported:
